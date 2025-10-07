@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "231918160893",
-    "project_id": "messenger-8d0ad",
-    "storage_bucket": "messenger-8d0ad.firebasestorage.app"
+    "project_number": "291053486061",
+    "project_id": "hazir-55960",
+    "storage_bucket": "hazir-55960.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:231918160893:android:8d96285c88c10e1deb6794",
+        "mobilesdk_app_id": "1:291053486061:android:dfb68d76e27ef822c831e4",
         "android_client_info": {
-          "package_name": "com.example.messenger"
+          "package_name": "com.example.hazir"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBNtIeAWtoD7v5w2mxE0xsgTRJFZtRcL-M"
+          "current_key": "AIzaSyAFKbMVy7M2DgyIJOXPKIKxFnJ6C1z9Puo"
         }
       ],
       "services": {

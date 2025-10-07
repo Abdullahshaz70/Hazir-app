@@ -15,7 +15,9 @@ class _Register extends State<Register> {
 
   Widget build(BuildContext){
     return Scaffold(
-
+      appBar: AppBar(
+        title: Text("Register"),
+      ),
     );
   }
 

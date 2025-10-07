@@ -24,7 +24,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
       body: Stack(
         children: [
 
-            FlutterMap(
+          FlutterMap(
             options: MapOptions(
               initialCenter:_center, 
               initialZoom: 16,
@@ -54,6 +54,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               ),
             ],
           ),
+
 
           Positioned(
             top: 50,

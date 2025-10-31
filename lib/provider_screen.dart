@@ -4,6 +4,9 @@ import 'dart:ffi';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import 'walkin_screen.dart';
+import 'catalog_screen.dart';
+import 'Queue_screen.dart';
 
 class ProviderScreen extends StatefulWidget
 {
@@ -63,9 +66,9 @@ class _ProviderScreen extends State<ProviderScreen>
 
       body: TabBarView(
         children: [
-          // Queue()
-          // Walkin()
-          // Catalog()
+          Queue(),
+          Walkin(),
+          Catalog()
         ]
       ),
     

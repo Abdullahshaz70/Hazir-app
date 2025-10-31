@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'consumer_screen.dart';
+import 'provider_screen.dart';
 import 'register.dart';
 
 void main() async{
@@ -19,7 +20,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       // home: const MyHomePage(),
       // home: ConsumerScreen(),
-      home: Register(),
+      // home: Register(),
+      home: ProviderScreen(),
     );
   }
 }

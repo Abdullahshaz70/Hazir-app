@@ -20,7 +20,7 @@ class _WalkinState extends State<Walkin> {
   List<String> prepaidOptions = ['Yes', 'No'];
 
 
-  List<Map<String, String>> recentWalkins = [];
+List<Map<String, String>> recentWalkins = [];
 
   void _addWalkin() {
     if (_formKey.currentState!.validate()) {

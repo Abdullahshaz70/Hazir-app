@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 import 'consumer_screen.dart';
 import 'provider_screen.dart';
-import 'register.dart';
+import 'sign_up.dart';
+import 'login.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,12 +17,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final seed = Color.fromRGBO(2,62,138,1);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: seed),
+      ),
       // home: const MyHomePage(),
       // home: ConsumerScreen(),
       // home: Register(),
-      home: ProviderScreen(),
+      // home: ProviderScreen(),
+        home: LoginScreen(),
     );
   }
 }

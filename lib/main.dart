@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'consumer_screen.dart';
 import 'provider_screen.dart';
-import 'sign_up.dart';
-import 'login.dart';
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,8 +25,8 @@ class MyApp extends StatelessWidget {
       // home: const MyHomePage(),
       // home: ConsumerScreen(),
       // home: Register(),
-      // home: ProviderScreen(),
-        home: LoginScreen(),
+      home: ProviderScreen(),
+        // home: LoginScreen(),
     );
   }
 }

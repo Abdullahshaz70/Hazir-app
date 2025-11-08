@@ -94,29 +94,67 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: _contactController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: "Contact Number",
-                hintText: "+92 300 1234567",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: "Email Address",
-                hintText: "****@example.com",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
+
+TextField(
+  controller: _contactController,
+  keyboardType: TextInputType.phone,
+  readOnly: true, 
+  enabled: false,  
+  decoration: InputDecoration(
+    labelText: "Contact Number",
+    hintText: "+92 300 1234567",
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    filled: true,
+    fillColor: Colors.grey[200], 
+  ),
+),
+const SizedBox(height: 16),
+TextField(
+  controller: _emailController,
+  keyboardType: TextInputType.emailAddress,
+  readOnly: true,
+  enabled: false,
+  decoration: InputDecoration(
+    labelText: "Email Address",
+    hintText: "****@example.com",
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    filled: true,
+    fillColor: Colors.grey[200],
+  ),
+),
+
+SizedBox(height: 16,),
+SizedBox(
+  width: double.infinity,
+  height: 50,
+  child: ElevatedButton(
+    onPressed: () {
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Theme.of(context).primaryColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+    child: const Text(
+      "Save Profile",
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
+    ),
+  ),
+),
+
+
+
+
+
             const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

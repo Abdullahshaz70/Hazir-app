@@ -1,7 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:messenger/models/provider_model.dart';
 
+import 'package:flutter_map/flutter_map.dart'; 
+import 'package:latlong2/latlong.dart';       
+import 'package:geocoding/geocoding.dart';
+
 import 'add_Service.dart';
+import 'map_screen.dart';
 
 class Catalog extends StatefulWidget {
   final ProviderData providerData;
@@ -17,6 +23,11 @@ class _CatalogState extends State<Catalog> {
   late TextEditingController _ownerNameController;
   late TextEditingController _contactController;
   late TextEditingController _emailController;
+
+  late TextEditingController locationController;
+  late LatLng currentLatLng;
+  late GeoPoint currentGeoPoint;
+
 
   @override
   void initState() {
@@ -34,6 +45,15 @@ class _CatalogState extends State<Catalog> {
     _contactController =
         TextEditingController(text: widget.providerData.contactNumber);
     _emailController = TextEditingController(text: widget.providerData.email);
+
+    currentGeoPoint = widget.providerData.location;
+    currentLatLng = LatLng(currentGeoPoint.latitude, currentGeoPoint.longitude);
+    locationController = TextEditingController();
+
+    getLocationName(currentLatLng).then((name) {
+  locationController.text = name;
+});
+
   }
 
   @override
@@ -45,6 +65,26 @@ class _CatalogState extends State<Catalog> {
     _emailController.dispose();
     super.dispose();
   }
+
+
+Future<String> getLocationName(LatLng latLng) async {
+  try {
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      latLng.latitude,
+      latLng.longitude,
+    );
+
+    if (placemarks.isNotEmpty) {
+      final p = placemarks.first;
+      return "${p.locality ?? ''}, ${p.country ?? ''}";
+    }
+  } catch (e) {
+    print("Error getting location name: $e");
+  }
+
+  // fallback if no placemarks found
+  return "${latLng.latitude}, ${latLng.longitude}";
+}
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +135,33 @@ class _CatalogState extends State<Catalog> {
             ),
             const SizedBox(height: 16),
 
+
+TextField(
+  controller: locationController,
+  readOnly: true,
+  decoration: InputDecoration(
+    labelText: "Location",
+    border: OutlineInputBorder(),
+  ),
+  onTap: () async {
+    LatLng? newLocation = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MapPick(),
+      ),
+    );
+
+    if (newLocation != null) {
+      setState(() {
+        currentLatLng = newLocation;
+      });
+      final name = await getLocationName(newLocation);
+      locationController.text = name;
+    }
+  },
+),
+
+
 TextField(
   controller: _contactController,
   keyboardType: TextInputType.phone,
@@ -111,6 +178,7 @@ TextField(
   ),
 ),
 const SizedBox(height: 16),
+
 TextField(
   controller: _emailController,
   keyboardType: TextInputType.emailAddress,
@@ -128,6 +196,7 @@ TextField(
 ),
 
 SizedBox(height: 16,),
+
 SizedBox(
   width: double.infinity,
   height: 50,

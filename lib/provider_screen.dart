@@ -28,6 +28,7 @@ class _ProviderScreenState extends State<ProviderScreen> {
     _fetchProviderData();
   }
 
+
   Future<void> _fetchProviderData() async {
   try {
     final uid = "2elIJHIAJBudDl21Q21S";
@@ -49,6 +50,8 @@ class _ProviderScreenState extends State<ProviderScreen> {
     });
   }
 }
+
+  
 
   @override
 Widget build(BuildContext context) {

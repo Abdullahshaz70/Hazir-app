@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:messenger/models/provider_model.dart';
 
+import 'add_Service.dart';
+
 class Catalog extends StatefulWidget {
   final ProviderData providerData;
   const Catalog({super.key, required this.providerData});
@@ -18,7 +20,7 @@ class _CatalogState extends State<Catalog> {
 
   @override
   void initState() {
-    super.initState(); 
+    super.initState();
     _initializeControllers();
   }
 
@@ -31,8 +33,7 @@ class _CatalogState extends State<Catalog> {
         TextEditingController(text: widget.providerData.ownerName);
     _contactController =
         TextEditingController(text: widget.providerData.contactNumber);
-    _emailController =
-        TextEditingController(text: widget.providerData.email);
+    _emailController = TextEditingController(text: widget.providerData.email);
   }
 
   @override
@@ -62,7 +63,6 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 20),
-
             TextField(
               controller: _shopNameController,
               decoration: InputDecoration(
@@ -73,7 +73,6 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: _descriptionController,
               maxLines: 3,
@@ -85,7 +84,6 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: _ownerNameController,
               decoration: InputDecoration(
@@ -96,7 +94,6 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: _contactController,
               keyboardType: TextInputType.phone,
@@ -109,7 +106,6 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 16),
-
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
@@ -122,7 +118,6 @@ class _CatalogState extends State<Catalog> {
               ),
             ),
             const SizedBox(height: 30),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -134,7 +129,9 @@ class _CatalogState extends State<Catalog> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => AddService(providerData: widget.providerData,)));
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[700],
                     shape: RoundedRectangleBorder(
@@ -151,39 +148,35 @@ class _CatalogState extends State<Catalog> {
               ],
             ),
             const SizedBox(height: 12),
-
             if (widget.providerData.rateList.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: const Text(
-                    "No services added yet.",
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                )
-              else
-                Column(
-                  children: widget.providerData.rateList.map((service) {
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ListTile(
-                        title: Text(service['service'] ?? 'Unnamed'),
-                        subtitle: Text('Price: Rs ${service['price'] ?? 'N/A'}'),
-                      ),
-                    );
-                  }).toList(),
-                )
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: const Text(
+                  "No services added yet.",
+                  style: TextStyle(color: Colors.black54),
+                ),
+              )
+            else
+              Column(
+                children: widget.providerData.rateList.map((service) {
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    child: ListTile(
+                      title: Text(service['service'] ?? 'Unnamed'),
+                      subtitle: Text('Price: Rs ${service['price'] ?? 'N/A'}'),
+                    ),
+                  );
+                }).toList(),
+              )
           ],
         ),
       ),
     );
   }
 }
-
-
-

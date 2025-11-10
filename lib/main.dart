@@ -1,8 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'consumer_screen.dart';
-import 'provider_screen.dart';
+import 'consumer/consumer_screen.dart';
+import 'provider/provider_screen.dart';
+
+import 'authentication/sign_up.dart';
+import 'authentication/login.dart';
 
 
 void main() async{
@@ -25,8 +28,9 @@ class MyApp extends StatelessWidget {
       // home: const MyHomePage(),
       // home: ConsumerScreen(),
       // home: Register(),
-      home: ProviderScreen(),
-        // home: LoginScreen(),
+      // home: ProviderScreen(),
+      // home: LoginScreen(),
+      home: SignUpScreen(),
     );
   }
 }

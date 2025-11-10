@@ -4,7 +4,7 @@ import 'package:messenger/models/provider_model.dart';
 
 
 
-import 'queue_screen.dart';
+import '../queue_screen.dart';
 import 'walkin_screen.dart';
 import 'catalog_screen.dart';
 

@@ -1,11 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'consumer/consumer_screen.dart';
-import 'provider/provider_screen.dart';
-
 import 'authentication/sign_up.dart';
-import 'authentication/login.dart';
+
 
 
 void main() async{

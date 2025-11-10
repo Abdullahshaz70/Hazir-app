@@ -6,7 +6,7 @@ import 'sign_up.dart';
 
 
 import "../consumer/consumer_screen.dart";
-import "../provider/provider_screen.dart";
+
 
 
 class LoginScreen extends StatefulWidget {

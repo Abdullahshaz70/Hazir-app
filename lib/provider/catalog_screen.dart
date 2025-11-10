@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:messenger/models/provider_model.dart';
 
-import 'package:flutter_map/flutter_map.dart'; 
 import 'package:latlong2/latlong.dart';       
 import 'package:geocoding/geocoding.dart';
 

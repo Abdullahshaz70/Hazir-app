@@ -7,7 +7,7 @@ class ProviderData {
   final String email;
   final String shopName;
   final String ownerName;
-  final List<Map<String, dynamic>> rateList;       
+  List<Map<String, dynamic>> rateList;       
   final String description;
   final bool isVerified;
   String status;     

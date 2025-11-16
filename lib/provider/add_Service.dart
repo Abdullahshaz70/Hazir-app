@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:messenger/models/provider_model.dart';
 
 
@@ -34,86 +35,110 @@ class _AddService extends State<AddService> {
     );
   }
 
-  void addRate()async{
+  void addRate() async {
+  String service = serviceController.text.trim();
+  String price = priceController.text.trim();
 
-    String? service = serviceController.text.trim();
-    String? price = priceController.text.trim();
+  if (service.isNotEmpty && price.isNotEmpty) {
+    await FirebaseFirestore.instance
+        .collection('userProvider')
+        .doc(widget.providerData.uid)
+        .set({
+      "rateList": FieldValue.arrayUnion([
+        {
+          "service": service,
+          "price": int.parse(price),
+        }
+      ])
+    }, SetOptions(merge: true));
 
-    if(!service.isEmpty && !price.isEmpty){
+    serviceController.clear();
+    priceController.clear();
+    setState(() {
+      widget.providerData.rateList.add({"service": service, "price": int.parse(price)});
+    });
+  } else {
+    _FailedDialog();
+  }
+}
 
-      await FirebaseFirestore.instance.collection('userProvider')
-      .doc(widget.providerData.uid).update({
-        "rateList" : FieldValue.arrayUnion([
-          {
-            "service" : service,
-            "price" : int.parse(price),
-          }
-        ])
-      });
-      SetOptions(merge: true);
+  Future<void> removeRate(int index)async{
 
-      serviceController.clear();
-      priceController.clear();
-    }
-    else{
-      _FailedDialog();
-    }
+    final document = FirebaseFirestore.instance.collection('userProvider')
+    .doc(widget.providerData.uid);
+      
+    List<Map<String, dynamic>> updatedList =
+      List<Map<String, dynamic>>.from(widget.providerData.rateList);
+
+    updatedList.removeAt(index);
+    await document.update({"rateList" : updatedList});
+
+    setState(() {
+      widget.providerData.rateList = updatedList;
+    });
 
   }
 
-  
+  void editRate(int index) {
+    final item = widget.providerData.rateList[index];
+    TextEditingController editService = TextEditingController(text: item['service']);
+    TextEditingController editPrice = TextEditingController(text: item['price'].toString());
 
-  // void _editRate(int index) {
-  //   final item = rateList[index];
-  //   final TextEditingController editService = TextEditingController(text: item['service']);
-  //   final TextEditingController editPrice = TextEditingController(text: item['price']);
+    showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Edit Service"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: editService,
+              decoration: const InputDecoration(labelText: "Service Name"),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: editPrice,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Price"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              List<Map<String, dynamic>> updatedList =
+                  List<Map<String, dynamic>>.from(widget.providerData.rateList);
 
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: const Text("Edit Service"),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             TextField(
-  //               controller: editService,
-  //               decoration: const InputDecoration(labelText: "Service Name"),
-  //             ),
-  //             const SizedBox(height: 10),
-  //             TextField(
-  //               controller: editPrice,
-  //               keyboardType: TextInputType.number,
-  //               decoration: const InputDecoration(labelText: "Price"),
-  //             ),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text("Cancel"),
-  //           ),
-  //           ElevatedButton(
-  //             onPressed: () {
-  //               setState(() {
-  //                 rateList[index]['service'] = editService.text.trim();
-  //                 rateList[index]['price'] = editPrice.text.trim();
-  //               });
-  //               Navigator.pop(context);
-  //             },
-  //             child: const Text("Update"),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+              updatedList[index] = {
+                "service": editService.text.trim(),
+                "price": int.parse(editPrice.text.trim())
+              };
 
-  // void _deleteRate(int index) {
-  //   setState(() {
-  //     rateList.removeAt(index);
-  //   });
-  // }
+              await FirebaseFirestore.instance
+                  .collection('userProvider')
+                  .doc(widget.providerData.uid)
+                  .update({"rateList": updatedList});
+
+              setState(() {
+                widget.providerData.rateList = updatedList;
+              });
+
+              Navigator.pop(context);
+            },
+            child: const Text("Update"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -176,11 +201,11 @@ class _AddService extends State<AddService> {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.blue),
-                                  onPressed: (){},
+                                  onPressed: (){editRate(index);},
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {},
+                                  onPressed: () {removeRate(index);},
                                 ),
                               ],
                             ),

@@ -26,6 +26,8 @@ class _CatalogState extends State<Catalog> {
   late TextEditingController locationController;
   late LatLng currentLatLng;
   late GeoPoint currentGeoPoint;
+  
+  List<Map<String, dynamic>> rateList = [];
 
 
   @override
@@ -48,11 +50,12 @@ class _CatalogState extends State<Catalog> {
     currentGeoPoint = widget.providerData.location;
     currentLatLng = LatLng(currentGeoPoint.latitude, currentGeoPoint.longitude);
     locationController = TextEditingController();
+    
+    rateList = List<Map<String, dynamic>>.from(widget.providerData.rateList);
 
     getLocationName(currentLatLng).then((name) {
-  locationController.text = name;
-});
-
+      locationController.text = name;
+    });
   }
 
   @override
@@ -65,225 +68,283 @@ class _CatalogState extends State<Catalog> {
     super.dispose();
   }
 
+  Future<void> _refreshData() async {
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('providers')
+          .doc(widget.providerData.uid)
+          .get();
 
-Future<String> getLocationName(LatLng latLng) async {
-  try {
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      latLng.latitude,
-      latLng.longitude,
-    );
-
-    if (placemarks.isNotEmpty) {
-      final p = placemarks.first;
-      return "${p.locality ?? ''}, ${p.country ?? ''}";
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _shopNameController.text = data['shopName'] ?? '';
+          _descriptionController.text = data['description'] ?? '';
+          _ownerNameController.text = data['ownerName'] ?? '';
+          _contactController.text = data['contactNumber'] ?? '';
+          _emailController.text = data['email'] ?? '';
+          
+          if (data['location'] != null) {
+            currentGeoPoint = data['location'] as GeoPoint;
+            currentLatLng = LatLng(currentGeoPoint.latitude, currentGeoPoint.longitude);
+            getLocationName(currentLatLng).then((name) {
+              locationController.text = name;
+            });
+          }
+          
+          rateList = List<Map<String, dynamic>>.from(data['rateList'] ?? []);
+        });
+      }
+    } catch (e) {
+      print("Error refreshing data: $e");
     }
-  } catch (e) {
-    print("Error getting location name: $e");
   }
 
-  // fallback if no placemarks found
-  return "${latLng.latitude}, ${latLng.longitude}";
-}
+  Future<String> getLocationName(LatLng latLng) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latLng.latitude,
+        latLng.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        return "${p.locality ?? ''}, ${p.country ?? ''}";
+      }
+    } catch (e) {
+      print("Error getting location name: $e");
+    }
+
+    return "${latLng.latitude}, ${latLng.longitude}";
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Shop Profile",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            TextField(
-              controller: _shopNameController,
-              decoration: InputDecoration(
-                labelText: "Shop Name",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Shop Profile",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            
-            TextField(
-              controller: _descriptionController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: "Description",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            TextField(
-              controller: _ownerNameController,
-              decoration: InputDecoration(
-                labelText: "Owner Name",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-
-            TextField(
-              controller: locationController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: "Location",
-                border: OutlineInputBorder(),
-              ),
-              onTap: () async {
-                LatLng? newLocation = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MapPick(),
-                  ),
-                );
-
-                if (newLocation != null) {
-                  setState(() {
-                    currentLatLng = newLocation;
-                  });
-                  final name = await getLocationName(newLocation);
-                  locationController.text = name;
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-
-            TextField(
-              controller: _contactController,
-              keyboardType: TextInputType.phone,
-              readOnly: true, 
-              enabled: false,  
-              decoration: InputDecoration(
-                labelText: "Contact Number",
-                hintText: "+92 300 1234567",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                filled: true,
-                fillColor: Colors.grey[200], 
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              readOnly: true,
-              enabled: false,
-              decoration: InputDecoration(
-                labelText: "Email Address",
-                hintText: "****@example.com",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                filled: true,
-                fillColor: Colors.grey[200],
-              ),
-            ),
-            SizedBox(height: 16,),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Save Profile",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+              const SizedBox(height: 20),
+              
+              TextField(
+                controller: _shopNameController,
+                decoration: InputDecoration(
+                  labelText: "Shop Name",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(height: 16),
+              
+              TextField(
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: "Description",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              TextField(
+                controller: _ownerNameController,
+                decoration: InputDecoration(
+                  labelText: "Owner Name",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Rate List",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+              TextField(
+                controller: locationController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: "Location",
+                  border: OutlineInputBorder(),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => AddService(providerData: widget.providerData,)));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green[700],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                  ),
-                  child: const Text(
-                    "Add Service",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (widget.providerData.rateList.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: const Text(
-                  "No services added yet.",
-                  style: TextStyle(color: Colors.black54),
-                ),
-              )
-            else
-              Column(
-                children: widget.providerData.rateList.map((service) {
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(service['service'] ?? 'Unnamed'),
-                      subtitle: Text('Price: Rs ${service['price'] ?? 'N/A'}'),
+                onTap: () async {
+                  LatLng? newLocation = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MapPick(),
                     ),
                   );
-                }).toList(),
+
+                  if (newLocation != null) {
+                    setState(() {
+                      currentLatLng = newLocation;
+                    });
+                    final name = await getLocationName(newLocation);
+                    locationController.text = name;
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: _contactController,
+                keyboardType: TextInputType.phone,
+                readOnly: true, 
+                enabled: false,  
+                decoration: InputDecoration(
+                  labelText: "Contact Number",
+                  hintText: "+92 300 1234567",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200], 
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                readOnly: true,
+                enabled: false,
+                decoration: InputDecoration(
+                  labelText: "Email Address",
+                  hintText: "****@example.com",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                ),
+              ),
+              SizedBox(height: 16,),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    "Save Profile",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Rate List",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => AddService(providerData: widget.providerData,)));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                    ),
+                    child: const Text(
+                      "Add Service",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('userProvider')
+                    .doc(widget.providerData.uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data!.exists) {
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    final rateList = List<Map<String, dynamic>>.from(data['rateList'] ?? []);
+                    
+                    if (rateList.isEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: const Text(
+                          "No services added yet.",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      );
+                    } else {
+                      return Column(
+                        children: rateList.map((service) {
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            child: ListTile(
+                              title: Text(service['service'] ?? 'Unnamed'),
+                              subtitle: Text('Price: Rs ${service['price'] ?? 'N/A'}'),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }
+                  }
+                  
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: const Text(
+                      "No services added yet.",
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  );
+                },
               )
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-

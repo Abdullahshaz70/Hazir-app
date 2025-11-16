@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProviderData {
-  final String? contactNumber;                
-  final Map<String, dynamic>? customers;      
-  final GeoPoint location;                    
-  final String email;
-  final String shopName;
-  final String ownerName;
+  String? contactNumber;                
+  Map<String, dynamic>? customers;      
+  GeoPoint location;                    
+  String email;
+  String shopName;
+  String ownerName;
   List<Map<String, dynamic>> rateList;       
-  final String description;
-  final bool isVerified;
+  String description;
+  bool isVerified;
   String status;     
 
   final uid;                         

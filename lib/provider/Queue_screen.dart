@@ -1,42 +1,3 @@
-// import 'package:flutter/material.dart';
-
-
-// class Queue extends StatefulWidget
-// {
-//   @override
-//   State<Queue> createState()=> _Queue();
-// }
-
-
-
-// class _Queue extends State<Queue>
-// {
-
-
-//   @override
-//   Widget build(BuildContext context){
-//     return Scaffold(
-
-//       body: Column(
-//         children: [
-//           Text( "Queue",
-//             style: TextStyle(
-//               fontWeight: FontWeight.bold,
-//               fontSize: 20,
-//             ),
-//           ),
-//         ],
-//       ),
-
-//     );
-
-
-//   }
-
-// }
-
-
-
 import 'package:flutter/material.dart';
 
 class Queue extends StatefulWidget {
@@ -47,7 +8,7 @@ class Queue extends StatefulWidget {
 }
 
 class _QueueState extends State<Queue> {
-  // Mock data for demo (you can replace with dynamic backend data)
+
   List<Map<String, dynamic>> liveQueue = [
     {
       'name': 'Ali Khan',

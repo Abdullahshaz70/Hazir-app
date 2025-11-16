@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:messenger/models/provider_model.dart';
 
 
 
-import '../queue_screen.dart';
+import 'queue_screen.dart';
 import 'walkin_screen.dart';
 import 'catalog_screen.dart';
 
@@ -31,7 +32,7 @@ class _ProviderScreenState extends State<ProviderScreen> {
 
   Future<void> _fetchProviderData() async {
   try {
-    final uid = "2elIJHIAJBudDl21Q21S";
+    final uid = FirebaseAuth.instance.currentUser?.uid;
     final doc = await FirebaseFirestore.instance
         .collection('userProvider')
         .doc(uid)

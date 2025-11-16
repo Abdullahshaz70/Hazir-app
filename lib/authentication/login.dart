@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:messenger/provider/provider_screen.dart';
 import 'sign_up.dart';
 
 
@@ -25,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool obscurePassword = true;
 
+  String? userType;
+
   String? _validateEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Please enter email';
     if (!EmailValidator.validate(v.trim())) return 'Enter a valid email';
@@ -44,7 +47,43 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _onLogin() async {
+  void initState(){
+    super.initState();
+    _fetchUsertype();
+  }
+
+  Future<void> _fetchUsertype()async{
+
+    try{
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      if(uid == null){
+        debugPrint("UID is null");
+        return;
+      }
+
+      final userDoc = await FirebaseFirestore.instance.collection('userProvider').doc(uid).get();
+
+      if(userDoc.exists)
+        userType = "userProvider";
+      else{
+        final consumerDoc = await FirebaseFirestore.instance.collection('userConsumer').doc(uid).get();
+          if (consumerDoc.exists) {
+            userType = "userConsumer";
+          } else {
+            debugPrint("User not found in any collection");
+          }
+        }
+      
+
+    }
+    catch(e){
+      debugPrint("Error checking user type: $e");
+    }
+  }
+
+void _onLogin() async {
   if (_formKey.currentState?.validate() ?? false) {
     try {
       showDialog(
@@ -79,10 +118,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pop(context);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ConsumerScreen()),
-      );
+      if(userType == "userConsumer"){
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ConsumerScreen()),
+        );
+      }
+      else if(userType == "userProvider"){
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ProviderScreen()),
+        );
+      }
+
     } catch (e) {
       if (!mounted) return;
 

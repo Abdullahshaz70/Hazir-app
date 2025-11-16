@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'authentication/login.dart';
+import 'provider/provider_screen.dart';
 
 
 
@@ -25,8 +26,8 @@ class MyApp extends StatelessWidget {
       // home: const MyHomePage(),
       // home: ConsumerScreen(),
       // home: Register(),
-      // home: ProviderScreen(),
-      home: LoginScreen(),
+      home: ProviderScreen(),
+      // home: LoginScreen(),
       // home: SignUpScreen(),
     );
   }

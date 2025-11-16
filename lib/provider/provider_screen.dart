@@ -39,7 +39,7 @@ class _ProviderScreenState extends State<ProviderScreen> {
         .get();
 
     if (doc.exists) {
-      providerData = ProviderData.fromMap(doc.data()!);
+      providerData = ProviderData.fromMap(uid , doc.data()!);
     } else {
       debugPrint("Document does not exist for UID: $uid");
     }

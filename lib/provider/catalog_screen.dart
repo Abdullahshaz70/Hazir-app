@@ -102,6 +102,7 @@ Future<String> getLocationName(LatLng latLng) async {
               ),
             ),
             const SizedBox(height: 20),
+            
             TextField(
               controller: _shopNameController,
               decoration: InputDecoration(
@@ -112,6 +113,7 @@ Future<String> getLocationName(LatLng latLng) async {
               ),
             ),
             const SizedBox(height: 16),
+            
             TextField(
               controller: _descriptionController,
               maxLines: 3,
@@ -123,6 +125,7 @@ Future<String> getLocationName(LatLng latLng) async {
               ),
             ),
             const SizedBox(height: 16),
+            
             TextField(
               controller: _ownerNameController,
               decoration: InputDecoration(
@@ -135,92 +138,88 @@ Future<String> getLocationName(LatLng latLng) async {
             const SizedBox(height: 16),
 
 
-TextField(
-  controller: locationController,
-  readOnly: true,
-  decoration: InputDecoration(
-    labelText: "Location",
-    border: OutlineInputBorder(),
-  ),
-  onTap: () async {
-    LatLng? newLocation = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MapPick(),
-      ),
-    );
+            TextField(
+              controller: locationController,
+              readOnly: true,
+              decoration: InputDecoration(
+                labelText: "Location",
+                border: OutlineInputBorder(),
+              ),
+              onTap: () async {
+                LatLng? newLocation = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MapPick(),
+                  ),
+                );
 
-    if (newLocation != null) {
-      setState(() {
-        currentLatLng = newLocation;
-      });
-      final name = await getLocationName(newLocation);
-      locationController.text = name;
-    }
-  },
-),
+                if (newLocation != null) {
+                  setState(() {
+                    currentLatLng = newLocation;
+                  });
+                  final name = await getLocationName(newLocation);
+                  locationController.text = name;
+                }
+              },
+            ),
+            const SizedBox(height: 16),
 
+            TextField(
+              controller: _contactController,
+              keyboardType: TextInputType.phone,
+              readOnly: true, 
+              enabled: false,  
+              decoration: InputDecoration(
+                labelText: "Contact Number",
+                hintText: "+92 300 1234567",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                filled: true,
+                fillColor: Colors.grey[200], 
+              ),
+            ),
+            const SizedBox(height: 16),
 
-TextField(
-  controller: _contactController,
-  keyboardType: TextInputType.phone,
-  readOnly: true, 
-  enabled: false,  
-  decoration: InputDecoration(
-    labelText: "Contact Number",
-    hintText: "+92 300 1234567",
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    filled: true,
-    fillColor: Colors.grey[200], 
-  ),
-),
-const SizedBox(height: 16),
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              readOnly: true,
+              enabled: false,
+              decoration: InputDecoration(
+                labelText: "Email Address",
+                hintText: "****@example.com",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+              ),
+            ),
+            SizedBox(height: 16,),
 
-TextField(
-  controller: _emailController,
-  keyboardType: TextInputType.emailAddress,
-  readOnly: true,
-  enabled: false,
-  decoration: InputDecoration(
-    labelText: "Email Address",
-    hintText: "****@example.com",
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    filled: true,
-    fillColor: Colors.grey[200],
-  ),
-),
-
-SizedBox(height: 16,),
-
-SizedBox(
-  width: double.infinity,
-  height: 50,
-  child: ElevatedButton(
-    onPressed: () {
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Theme.of(context).primaryColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-    ),
-    child: const Text(
-      "Save Profile",
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-      ),
-    ),
-  ),
-),
-
-
-
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  "Save Profile",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
 
 
             const SizedBox(height: 30),

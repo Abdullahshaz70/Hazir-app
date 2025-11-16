@@ -24,14 +24,14 @@ class _AddService extends State<AddService> {
 
     if (service.isNotEmpty && price.isNotEmpty) {
 
+      
+
 
       setState(() {
-        
-
-
         serviceController.clear();
         priceController.clear();
       });
+
     }
   }
 
@@ -99,6 +99,7 @@ class _AddService extends State<AddService> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            
             TextField(
               controller: serviceController,
               decoration: const InputDecoration(
@@ -107,6 +108,7 @@ class _AddService extends State<AddService> {
               ),
             ),
             const SizedBox(height: 10),
+            
             TextField(
               controller: priceController,
               keyboardType: TextInputType.number,

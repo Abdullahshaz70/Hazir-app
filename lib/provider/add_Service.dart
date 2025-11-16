@@ -16,24 +16,52 @@ class _AddService extends State<AddService> {
   final TextEditingController serviceController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
 
-  
-
-  void _addRate() async {
-    final service = serviceController.text.trim();
-    final price = priceController.text.trim();
-
-    if (service.isNotEmpty && price.isNotEmpty) {
-
-      
-
-
-      setState(() {
-        serviceController.clear();
-        priceController.clear();
-      });
-
-    }
+  void _FailedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Something is Missing'),
+        content: const Text('Check service and price should be there'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
+
+  void addRate()async{
+
+    String? service = serviceController.text.trim();
+    String? price = priceController.text.trim();
+
+    if(!service.isEmpty && !price.isEmpty){
+
+      await FirebaseFirestore.instance.collection('userProvider')
+      .doc(widget.providerData.uid).update({
+        "rateList" : FieldValue.arrayUnion([
+          {
+            "service" : service,
+            "price" : int.parse(price),
+          }
+        ])
+      });
+      SetOptions(merge: true);
+
+      serviceController.clear();
+      priceController.clear();
+    }
+    else{
+      _FailedDialog();
+    }
+
+  }
+
+  
 
   // void _editRate(int index) {
   //   final item = rateList[index];
@@ -122,7 +150,7 @@ class _AddService extends State<AddService> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _addRate,
+                onPressed: (){addRate();},
                 icon: const Icon(Icons.add),
                 label: const Text("Add to Rate List"),
               ),
@@ -146,14 +174,14 @@ class _AddService extends State<AddService> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // IconButton(
-                                //   icon: const Icon(Icons.edit, color: Colors.blue),
-                                //   onPressed: () => _editRate(index),
-                                // ),
-                                // IconButton(
-                                //   icon: const Icon(Icons.delete, color: Colors.red),
-                                //   onPressed: () => _deleteRate(index),
-                                // ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: (){},
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {},
+                                ),
                               ],
                             ),
                           ),

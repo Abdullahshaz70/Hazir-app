@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Walkin extends StatefulWidget {
-  const Walkin({super.key});
+  final String providerId; 
+
+  const Walkin({super.key, required this.providerId});
 
   @override
   State<Walkin> createState() => _WalkinState();
@@ -14,34 +17,69 @@ class _WalkinState extends State<Walkin> {
   final _notesController = TextEditingController();
 
   String? _selectedService;
-  String _prepaid = 'No'; 
+  String _prepaid = 'No';
 
-  List<String> services = ['Haircut — Rs. 800', 'Beard Trim — Rs. 400']; 
   List<String> prepaidOptions = ['Yes', 'No'];
+  List<Map<String, dynamic>> rateList = []; 
 
 
-List<Map<String, String>> recentWalkins = [];
+  Future<void> _loadRateList() async {
+    final doc = await FirebaseFirestore.instance
+        .collection('userProvider')
+        .doc(widget.providerId)
+        .get();
 
-  void _addWalkin() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        recentWalkins.add({
-          'name': _nameController.text.trim(),
-          'service': _selectedService!,
-          'prepaid': _prepaid,
-          'notes': _notesController.text.trim(),
-        });
+    if (doc.exists) {
+      final data = doc.data() as Map<String, dynamic>;
 
-        _nameController.clear();
-        _notesController.clear();
-        _selectedService = null;
-        _prepaid = 'No';
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Customer added to queue!')),
-      );
+      if (data.containsKey('rateList')) {
+        rateList = List<Map<String, dynamic>>.from(data['rateList']);
+      }
+      setState(() {});
     }
+  }
+
+
+  Future<void> _addWalkin() async {
+  if (_formKey.currentState!.validate()) {
+    final selected = rateList.firstWhere(
+      (item) =>
+          "${item['service']} — Rs. ${item['price']}" == _selectedService,
+    );
+
+    final data = {
+      'name': _nameController.text.trim(),
+      'service': selected['service'],
+      'price': selected['price'],
+      'prepaid': _prepaid,
+      'notes': _notesController.text.trim(),
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    await FirebaseFirestore.instance
+        .collection('userProvider')
+        .doc(widget.providerId)
+        .update({
+      "customers": FieldValue.arrayUnion([data]),
+    });
+
+    _nameController.clear();
+    _notesController.clear();
+    _selectedService = null;
+    _prepaid = 'No';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Customer added to queue!")),
+    );
+
+    setState(() {});
+  }
+}
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRateList();
   }
 
   @override
@@ -51,8 +89,7 @@ List<Map<String, String>> recentWalkins = [];
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
-          key: _formKey, 
-
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
 
@@ -62,51 +99,49 @@ List<Map<String, String>> recentWalkins = [];
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               ),
               const SizedBox(height: 20),
+
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: "Customer name",
-                  hintText: "e.g., Ali Khan",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return "Please enter customer name";
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    value == null || value.trim().isEmpty
+                        ? "Please enter customer name"
+                        : null,
               ),
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
                 value: _selectedService,
                 decoration: InputDecoration(
-                  labelText: "Service",
+                  labelText: "Select Service",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                items: services
-                    .map((service) => DropdownMenuItem(
-                          value: service,
-                          child: Text(service),
-                        ))
+                items: rateList
+                    .map(
+                      (item) => DropdownMenuItem(
+                        value: "${item['service']} — Rs. ${item['price']}",
+                        child: Text("${item['service']} — Rs. ${item['price']}"),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) {
-                  setState(() {
-                    _selectedService = value;
-                  });
+                  setState(() => _selectedService = value);
                 },
                 validator: (value) =>
                     value == null ? "Please select a service" : null,
               ),
               const SizedBox(height: 16),
 
+              
               Row(
                 children: [
-
                   Expanded(
                     flex: 2,
                     child: TextField(
@@ -120,9 +155,7 @@ List<Map<String, String>> recentWalkins = [];
                       ),
                     ),
                   ),
-
                   const SizedBox(width: 10),
-                  
                   Expanded(
                     flex: 1,
                     child: DropdownButtonFormField<String>(
@@ -140,9 +173,7 @@ List<Map<String, String>> recentWalkins = [];
                               ))
                           .toList(),
                       onChanged: (value) {
-                        setState(() {
-                          _prepaid = value!;
-                        });
+                        setState(() => _prepaid = value!);
                       },
                     ),
                   ),
@@ -157,14 +188,9 @@ List<Map<String, String>> recentWalkins = [];
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[700],
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
                   ),
-                  child: const Text(
-                    "Add to Queue",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+                  child: const Text("Add to Queue",
+                      style: TextStyle(color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 30),
@@ -179,45 +205,39 @@ List<Map<String, String>> recentWalkins = [];
               ),
               const SizedBox(height: 10),
 
-              if (recentWalkins.isEmpty)
-                const Text(
-                  "No recent walk-ins yet.",
-                  style: TextStyle(color: Colors.black45),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: recentWalkins.length,
-                  itemBuilder: (context, index) {
-                    final customer = recentWalkins[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.green[200],
-                          child: Text(
-                            customer['name']![0].toUpperCase(),
-                            style: const TextStyle(color: Colors.black),
+              FutureBuilder(
+                future: FirebaseFirestore.instance
+                    .collection('userProvider')
+                    .doc(widget.providerId)
+                    .get(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return Text("Loading...");
+
+                  final data = snapshot.data!.data() as Map<String, dynamic>;
+                  final customers = List<Map<String, dynamic>>.from(data['customers'] ?? []);
+
+                  if (customers.isEmpty) return Text("No walk-ins yet.");
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: customers.length,
+                    itemBuilder: (context, index) {
+                      final c = customers[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(c['name']),
+                          subtitle: Text("${c['service']} — Rs. ${c['price']}"),
+                          trailing: Text(
+                            c['prepaid'] == 'Yes' ? "Prepaid" : "Pay Later",
                           ),
                         ),
-                        title: Text(customer['name'] ?? ''),
-                        subtitle: Text(customer['service'] ?? ''),
-                        trailing: Text(
-                          customer['prepaid'] == 'Yes' ? 'Prepaid' : 'Pay Later',
-                          style: TextStyle(
-                            color: customer['prepaid'] == 'Yes'
-                                ? Colors.green
-                                : Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  );
+                },
+              )
+            
             ],
           ),
         ),

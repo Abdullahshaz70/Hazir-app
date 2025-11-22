@@ -133,7 +133,7 @@ Widget build(BuildContext context) {
               : TabBarView(
                   children: [
                     const Queue(),
-                    const Walkin(),
+                    Walkin(providerId: providerData!.uid),
                     Catalog(providerData: providerData!),
                   ],
                 ),

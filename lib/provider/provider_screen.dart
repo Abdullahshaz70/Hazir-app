@@ -52,8 +52,6 @@ class _ProviderScreenState extends State<ProviderScreen> {
   }
 }
 
-  
-
   @override
 Widget build(BuildContext context) {
   return DefaultTabController(

@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProviderData {
   String? contactNumber;                
-  Map<String, dynamic>? customers;      
+  // Map<String, dynamic>? customers;   
+  List<dynamic>? customers;
+
   GeoPoint location;                    
   String email;
   String shopName;

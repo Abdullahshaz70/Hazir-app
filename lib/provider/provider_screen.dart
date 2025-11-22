@@ -5,7 +5,7 @@ import 'package:messenger/models/provider_model.dart';
 
 
 
-import 'queue_screen.dart';
+import 'Queue_screen.dart';
 import 'walkin_screen.dart';
 import 'catalog_screen.dart';
 
@@ -97,18 +97,35 @@ Widget build(BuildContext context) {
                 ),
               ),
             ),
+        
           TextButton(
-            onPressed: () {
-              setState(() {
-                if (providerData != null) {
+            onPressed: () async {
+              if (providerData != null) {
+                setState(() {
                   providerData!.status =
                       providerData!.status == "Open" ? "Closed" : "Open";
-                }
-              });
-            },
-            child: const Text("Toggle",
-                style: TextStyle(color: Colors.black, fontSize: 15)),
+                });
+
+                await FirebaseFirestore.instance
+                    .collection("userProvider")
+                .doc(providerData!.uid)   
+                .update({
+              "status": providerData!.status,
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+            content: Text("Status updated to ${providerData!.status}")),
+          );
+            }
+          },
+          child: const Text(
+            "Toggle",
+            style: TextStyle(color: Colors.black, fontSize: 15),
           ),
+        )
+
+        
         ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(48),
@@ -132,7 +149,7 @@ Widget build(BuildContext context) {
               ? const Center(child: Text("No provider data found"))
               : TabBarView(
                   children: [
-                    const Queue(),
+                    Queue(providerId: providerData!.uid),
                     Walkin(providerId: providerData!.uid),
                     Catalog(providerData: providerData!),
                   ],

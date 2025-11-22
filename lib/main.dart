@@ -26,8 +26,8 @@ class MyApp extends StatelessWidget {
       // home: const MyHomePage(),
       // home: ConsumerScreen(),
       // home: Register(),
-      // home: ProviderScreen(),
-      home: LoginScreen(),
+      home: ProviderScreen(),
+      // home: LoginScreen(),
       // home: SignUpScreen(),
     );
   }

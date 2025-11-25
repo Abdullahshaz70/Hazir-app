@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'authentication/login.dart';
+import '../authentication/login.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

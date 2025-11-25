@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'authentication/login.dart';
 import 'provider/provider_screen.dart';
+
 import 'consumer/consumer_screen.dart';
 
 void main() async {
@@ -37,7 +38,7 @@ class AuthWrapper extends StatelessWidget {
 
   Future<String?> _getUserRole(String uid) async {
     try {
-      // Check in userProvider collection
+      
       DocumentSnapshot providerDoc = await FirebaseFirestore.instance
           .collection('userProvider')
           .doc(uid)
@@ -47,7 +48,6 @@ class AuthWrapper extends StatelessWidget {
         return 'provider';
       }
 
-      // Check in userConsumer collection
       DocumentSnapshot consumerDoc = await FirebaseFirestore.instance
           .collection('userConsumer')
           .doc(uid)
@@ -69,7 +69,6 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Show loading while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
@@ -78,12 +77,10 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // If user is not logged in, show login screen
         if (!snapshot.hasData || snapshot.data == null) {
           return LoginScreen();
         }
 
-        // If user is logged in, check their role
         return FutureBuilder<String?>(
           future: _getUserRole(snapshot.data!.uid),
           builder: (context, roleSnapshot) {
@@ -96,7 +93,6 @@ class AuthWrapper extends StatelessWidget {
             }
 
             if (roleSnapshot.hasData && roleSnapshot.data != null) {
-              // Navigate based on role
               if (roleSnapshot.data == 'provider') {
                 return ProviderScreen();
               } else if (roleSnapshot.data == 'consumer') {
@@ -104,7 +100,6 @@ class AuthWrapper extends StatelessWidget {
               }
             }
 
-            // If role not found, logout and show login
             FirebaseAuth.instance.signOut();
             return LoginScreen();
           },

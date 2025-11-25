@@ -30,6 +30,17 @@ class _CatalogState extends State<Catalog> {
   List<Map<String, dynamic>> rateList = [];
   bool isSaving = false;
 
+  final List<String> categories = [
+  "Karyana Store",
+  "Barber",
+  "Car Mechanic",
+  "Bike Mechanic",
+  "Carpenter",
+];
+
+String? selectedCategory;
+
+
 
   @override
   void initState() {
@@ -133,7 +144,7 @@ class _CatalogState extends State<Catalog> {
     String description = _descriptionController.text.trim();
     String name = _ownerNameController.text.trim();
 
-    if (shopname.isEmpty || description.isEmpty || name.isEmpty) {
+    if (shopname.isEmpty || description.isEmpty || name.isEmpty || selectedCategory==null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all fields'),
@@ -156,12 +167,14 @@ class _CatalogState extends State<Catalog> {
         'description': description,
         'ownerName': name,
         'location': currentGeoPoint,
+        'shopType' : selectedCategory,
       });
 
       widget.providerData.shopName = shopname;
       widget.providerData.description = description;
       widget.providerData.ownerName = name;
       widget.providerData.location = currentGeoPoint;
+      widget.providerData.shopType = selectedCategory!;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -307,6 +320,28 @@ class _CatalogState extends State<Catalog> {
                 ),
               ),
               SizedBox(height: 16,),
+
+            DropdownButtonFormField<String>(
+  value: widget.providerData.shopType,
+  decoration: InputDecoration(
+    labelText: "Select Shop Category",
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+  ),
+  items: categories.map((category) {
+    return DropdownMenuItem(
+      value: category,
+      child: Text(category),
+    );
+  }).toList(),
+
+  onChanged: (value) {
+    selectedCategory = value;
+  },
+),
+SizedBox(height: 16),
+
 
               SizedBox(
                 width: double.infinity,

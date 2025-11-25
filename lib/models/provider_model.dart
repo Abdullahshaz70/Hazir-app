@@ -12,9 +12,11 @@ class ProviderData {
   List<Map<String, dynamic>> rateList;       
   String description;
   bool isVerified;
-  String status;     
+  String? status;     
 
-  final uid;                         
+  final uid;       
+
+  String shopType;                  
 
   ProviderData({
     this.contactNumber,
@@ -28,19 +30,21 @@ class ProviderData {
     required this.isVerified,
     required this.status,
     required this.uid,
+    required this.shopType,
   });
 
   factory ProviderData.fromMap(String? uid , Map<String, dynamic> data) {
     return ProviderData(
       uid: uid,
       contactNumber: data['contactNumber'],                   
+      shopType: data['shopType'] ?? '',                   
       customers: data['customers'],                           
       location: data['location'] is GeoPoint
       ? data['location']
       : const GeoPoint(0, 0),
       email: data['mail'] ?? '',                              
-      ownerName: data['name'] ?? '',                          
-      shopName: data['shopName'] ?? '',                                                   
+      ownerName: data['ownerName'] ?? '',                          
+      shopName: data['name'] ?? '',                                                   
       description: data['description'] ?? '',
       isVerified: data['isVerified'] ?? false,
       status: data['status'] ?? 'Closed',

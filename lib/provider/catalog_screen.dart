@@ -144,7 +144,7 @@ String? selectedCategory;
     String description = _descriptionController.text.trim();
     String name = _ownerNameController.text.trim();
 
-    if (shopname.isEmpty || description.isEmpty || name.isEmpty || selectedCategory==null) {
+    if (shopname.isEmpty || description.isEmpty || name.isEmpty || selectedCategory=='') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all fields'),

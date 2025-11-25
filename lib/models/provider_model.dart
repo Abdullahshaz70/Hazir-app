@@ -16,7 +16,7 @@ class ProviderData {
 
   final uid;       
 
-  String shopType;                  
+  String? shopType;                  
 
   ProviderData({
     this.contactNumber,
@@ -37,7 +37,7 @@ class ProviderData {
     return ProviderData(
       uid: uid,
       contactNumber: data['contactNumber'],                   
-      shopType: data['shopType'] ?? '',                   
+      shopType: data.containsKey('shopType') ? data['shopType'] : null,
       customers: data['customers'],                           
       location: data['location'] is GeoPoint
       ? data['location']

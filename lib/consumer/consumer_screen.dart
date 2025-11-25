@@ -197,7 +197,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
         _currentLocation = newPos;
       });
 
-      // Move the camera to the user
       _mapController.move(newPos, 16);
 
       _getPlaceName(position.latitude, position.longitude);
@@ -221,11 +220,84 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     }
   }
 
+  Widget _buildDraggableSheet() {
+    final List<String> categories = [
+      "Karyana Store",
+      "Barber",
+      "Car Mechanic",
+      "Bike Mechanic",
+      "Carpenter",
+    ];
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.10,
+      minChildSize: 0.10,
+      maxChildSize: 0.55,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 10,
+                spreadRadius: 1,
+              )
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: ListView(
+            controller: scrollController,
+            children: [
+              const SizedBox(height: 10),
+              
+              Center(
+                child: Container(
+                  width: 45,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              const Text(
+                "Select a Category",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              ...categories.map((category) {
+                return ListTile(
+                  leading: const Icon(Icons.store_mall_directory),
+                  title: Text(category),
+                  onTap: () {
+                    print("Selected $category");
+                  },
+                );
+              }).toList(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: primary,
         elevation: 0,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -260,6 +332,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           ],
         ),
       ),
+
       drawer: Drawer(
         child: Column(
           children: [
@@ -302,13 +375,15 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const SettingsScreen()),
                 );
               },
             ),
           ],
         ),
       ),
+
       body: Stack(
         children: [
           FlutterMap(
@@ -345,10 +420,15 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               backgroundColor: Colors.white,
               onPressed: _getUserLocation,
               child: _isLocating
-                  ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.my_location, color: Colors.black87),
             ),
           ),
+
+          _buildDraggableSheet(),
         ],
       ),
     );

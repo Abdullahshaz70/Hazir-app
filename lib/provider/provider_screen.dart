@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:messenger/models/provider_model.dart';
 
 
+import 'package:messenger/authentication/login.dart';
 
 import 'Queue_screen.dart';
 import 'walkin_screen.dart';
 import 'catalog_screen.dart';
+
 
 class ProviderScreen extends StatefulWidget {
   const ProviderScreen({super.key});
@@ -121,7 +123,28 @@ Widget build(BuildContext context) {
             "Toggle",
             style: TextStyle(color: Colors.black, fontSize: 15),
           ),
-        )
+        ),
+
+          TextButton(
+              onPressed: () {
+                FirebaseAuth.instance.signOut();
+                
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+
+              },
+
+              child: const Text(
+                "Logout",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
 
         
         ],

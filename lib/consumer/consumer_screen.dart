@@ -23,10 +23,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   String _currentAddress = "Lahore";
   bool _isLocating = false;
 
-  // State variables for multiple providers
   List<Map<String, dynamic>> _providersOnMap = [];
   
-  // State variables for the selected provider's detailed profile
   Map<String, dynamic>? _selectedShopProfile;
   bool _isProfileLoading = false;
 
@@ -39,10 +37,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     });
   }
   
-  // --- LOCATION & UTILITY FUNCTIONS (Kept brief for brevity) ---
-  
+
   Future<void> _getPlaceName(double lat, double lng) async {
-    // ... (Your implementation for fetching place name) ...
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty && mounted) {
@@ -58,7 +54,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   }
 
   Future<void> _loadLocationFromDatabase() async {
-    // ... (Your implementation for loading location from DB) ...
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
@@ -86,18 +81,17 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   }
 
   Future<void> _checkAndRequestLocation() async {
-    // ... (Your implementation for checking and requesting location) ...
-    // Simplified for placeholder:
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      // You should handle permission requests properly here
+    
     } else {
       _getUserLocation();
     }
   }
 
   Future<void> _getUserLocation() async {
-    // ... (Your implementation for getting user location) ...
+    
     setState(() => _isLocating = true);
     try {
       Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
@@ -114,7 +108,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     }
   }
 
-  // --- SERVICE & DATA FETCHING ---
 
   Future<List<Map<String, dynamic>>> getNearbyProviders(
       String category, LatLng userLoc,
@@ -150,9 +143,9 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           "name": data["name"] ?? data["ownerName"] ?? "Unknown Shop",
           "lat": lat,
           "lng": lng,
-          "distance": distance, // Distance in meters
+          "distance": distance,
           "services": data["services"] ?? {}, 
-          "shopType": category, // Include category for icon
+          "shopType": category, 
         });
       }
     }
@@ -166,7 +159,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     return nearbyProviders;
   }
 
-  // NEW FUNCTION: Fetch full profile data
   Future<Map<String, dynamic>?> getProviderProfile(String providerId) async {
     try {
       DocumentSnapshot doc = await FirebaseFirestore.instance
@@ -175,7 +167,10 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           .get();
       
       if (doc.exists && doc.data() is Map<String, dynamic>) {
-        return doc.data() as Map<String, dynamic>;
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        data['uid'] = doc.id; 
+        return data;
+        // return doc.data() as Map<String, dynamic>;
       }
     } catch (e) {
       debugPrint("Error fetching provider profile for $providerId: $e");
@@ -183,12 +178,11 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     return null;
   }
 
-  // --- HANDLERS ---
 
   Future<void> _handleCategoryTap(String category) async {
     setState(() {
       _providersOnMap = []; 
-      _selectedShopProfile = null; // Clear detail view
+      _selectedShopProfile = null; 
     });
 
     final providers = await getNearbyProviders(
@@ -217,7 +211,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     _mapController.move(target, 16);
   }
 
-  // NEW HANDLER: When a shop is tapped in the list
   Future<void> _handleShopTap(String providerId, double lat, double lng) async {
     setState(() {
       _isProfileLoading = true;
@@ -230,19 +223,16 @@ class _ConsumerScreen extends State<ConsumerScreen> {
       setState(() {
         _selectedShopProfile = profile;
         _isProfileLoading = false;
-        // Optionally zoom into the selected shop
       });
       _mapController.move(LatLng(lat, lng), 18);
     }
   }
 
 
-  // --- UI HELPERS ---
-  
+
   List<Marker> _getMarkers() {
     List<Marker> markers = [];
     
-    // User Location Marker (Red Pin)
     markers.add(
       Marker(
         point: _currentLocation,
@@ -252,7 +242,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
       ),
     );
 
-    // Provider Markers (Blue Pins)
     for (var provider in _providersOnMap) {
       markers.add(
         Marker(
@@ -281,14 +270,12 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     
     final profile = _selectedShopProfile!;
     
-    // Extract owner/shop details
     final String shopName = profile["name"] ?? profile["ownerName"] ?? "Unknown Shop";
     final String ownerName = profile["ownerName"] ?? "N/A";
-    final String phone = profile["phone"] ?? "N/A";
-    final String email = profile["email"] ?? "N/A";
+    final String phone = profile["contactNumber"] ?? "N/A";
     final String shopType = profile["shopType"] ?? "Service Provider";
-    final Map<String, dynamic> services = profile["services"] is Map ? profile["services"] as Map<String, dynamic> : {};
-    
+    final String uid = profile["uid"] ?? "N/A";
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Column(
@@ -304,7 +291,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
-                  // Close profile view and return to the list
                   setState(() => _selectedShopProfile = null);
                 },
               ),
@@ -329,44 +315,81 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             subtitle: Text(phone),
             dense: true,
           ),
-          
-          const SizedBox(height: 10),
-          const Text("Services Offered:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          if (services.isNotEmpty)
-            ...services.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(left: 10, top: 5),
-                child: Text("- ${entry.key}: Rs. ${entry.value}", style: const TextStyle(fontSize: 14)),
-              );
-            }).toList()
-          else
-            const Padding(
-              padding: EdgeInsets.only(left: 10, top: 5),
-              child: Text("No detailed services listed."),
-            ),
 
-          const SizedBox(height: 15),
+          ListTile(
+            leading: const Icon(Icons.phone, color: Colors.grey),
+            title: const Text("ID"),
+            subtitle: Text(uid),
+            dense: true,
+          ),
+          
+          const SizedBox(height: 20),
+        
           Center(
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.navigation),
-              label: const Text("Get Directions"),
-              onPressed: () {
-                final location = profile["location"] as GeoPoint?;
-                if (location != null) {
-                  // Implement navigation call (using the url_launcher helper)
-                  // Note: You must implement the _navigateToProvider helper function.
-                  // _navigateToProvider(location.latitude, location.longitude, shopName);
-                }
-              },
+            child: SizedBox(
+              width: double.infinity, 
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.group, size: 24),
+                label: const Text(
+                  "See Queue Now",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromRGBO(2, 62, 138, 1), 
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 5,
+                ),
+                onPressed: () {
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Navigating to ${shopName} Queue Screen...')),
+                  );
+
+
+                },
+              ),
             ),
-          )
+          ),
+          
+          // if (services.isNotEmpty)
+          //   ...services.entries.map((entry) {
+          //     return Padding(
+          //       padding: const EdgeInsets.only(left: 10, top: 5),
+          //       child: Text("- ${entry.key}: Rs. ${entry.value}", style: const TextStyle(fontSize: 14)),
+          //     );
+          //   }).toList()
+          // else
+          //   const Padding(
+          //     padding: EdgeInsets.only(left: 10, top: 5),
+          //     child: Text("No detailed services listed."),
+          //   ),
+
+          // const SizedBox(height: 15),
+          // Center(
+          //   child: ElevatedButton.icon(
+          //     icon: const Icon(Icons.navigation),
+          //     label: const Text("Get Directions"),
+          //     onPressed: () {
+          //       final location = profile["location"] as GeoPoint?;
+          //       if (location != null) {
+                  
+          //       }
+          //     },
+          //   ),
+          // )
+
+
         ],
       ),
     );
   }
 
   Widget _buildProviderListView(List<Map<String, dynamic>> providers) {
-    // List view of providers after category selection
+
     return Column(
       children: [
         const Padding(
@@ -386,7 +409,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                 subtitle: Text("Distance: $distanceKm km"),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // Handle tap: Show the shop profile
                   _handleShopTap(provider["id"], provider["lat"], provider["lng"]);
                 },
               );
@@ -400,7 +422,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
 
   Widget _buildDraggableSheet() {
     final List<Map<String, dynamic>> categories = [
-      // ... (Your category list here) ...
+    
       {
         "name": "Karyana Store",
         "shopType": "Karyana Store",
@@ -437,7 +459,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     return DraggableScrollableSheet(
       initialChildSize: 0.10,
       minChildSize: 0.10,
-      maxChildSize: _selectedShopProfile != null ? 0.9 : 0.6, // Higher max size for profile
+      maxChildSize: _selectedShopProfile != null ? 0.9 : 0.6, 
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -451,7 +473,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           child: Column(
             children: [
               const SizedBox(height: 10),
-              // Drag handle
               Center(
                 child: Container(
                   width: 45, height: 5,
@@ -460,10 +481,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               ),
               const SizedBox(height: 12),
 
-              // --- CONTENT BASED ON STATE ---
-
               if (_selectedShopProfile != null || _isProfileLoading)
-                // 1. SHOW PROFILE DETAILS
                 Expanded(
                   child: ListView(
                     controller: scrollController,
@@ -471,7 +489,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                   ),
                 )
               else 
-                // 2. SHOW CATEGORIES & PROVIDER LIST (Initial/List View)
                 Expanded(
                   child: ListView(
                     controller: scrollController,
@@ -482,8 +499,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 15),
-
-                      // Categories Horizontal List
                       SizedBox(
                         height: 80,
                         child: ListView.separated(
@@ -516,10 +531,9 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Provider List (Only shows if providers are found)
                       if (_providersOnMap.isNotEmpty)
                          SizedBox(
-                            height: 400, // Fixed height for list view inside column
+                            height: 400, 
                             child: _buildProviderListView(_providersOnMap),
                           )
                       else
@@ -534,15 +548,12 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     );
   }
 
-  // ... (build method remains the same) ...
 
   @override
   Widget build(BuildContext context) {
-    // ... (Your build method content) ...
     final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
-      // ... (AppBar and Drawer implementation) ...
       appBar: AppBar(
         backgroundColor: primary,
         elevation: 0,

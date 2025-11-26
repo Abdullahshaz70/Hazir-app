@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:messenger/provider/provider_screen.dart';
 import 'sign_up.dart';
-
-
-import "../consumer/consumer_screen.dart";
-
-
+import '../consumer/consumer_screen.dart';
+import '../provider/provider_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,8 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   String role = 'Service Consumer';
 
   bool obscurePassword = true;
-
-  String? userType;
 
   String? _validateEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Please enter email';
@@ -47,117 +41,80 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void initState(){
-    super.initState();
-    _fetchUsertype();
-  }
+  void _onLogin() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      try {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
 
-  Future<void> _fetchUsertype()async{
+        String collection =
+        role == 'Service Consumer' ? 'userConsumer' : 'userProvider';
 
-    try{
+        QuerySnapshot emailQuery = await FirebaseFirestore.instance
+            .collection(collection)
+            .where('mail', isEqualTo: emailController.text.trim())
+            .get();
 
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (emailQuery.docs.isEmpty) {
+          if (!mounted) return;
+          Navigator.pop(context);
 
-      if(uid == null){
-        debugPrint("UID is null");
-        return;
-      }
-
-      final userDoc = await FirebaseFirestore.instance.collection('userProvider').doc(uid).get();
-
-      if(userDoc.exists)
-        userType = "userProvider";
-      else{
-        final consumerDoc = await FirebaseFirestore.instance.collection('userConsumer').doc(uid).get();
-          if (consumerDoc.exists) {
-            userType = "userConsumer";
-          } else {
-            debugPrint("User not found in any collection");
-          }
+          _showLoginFailedDialog();
+          return;
         }
-      
 
-    }
-    catch(e){
-      debugPrint("Error checking user type: $e");
-    }
-  }
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
 
-void _onLogin() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      String collection = role == 'Service Consumer' ? 'userConsumer' : 'userProvider';
-
-      QuerySnapshot emailQuery = await FirebaseFirestore.instance
-          .collection(collection)
-          .where('mail', isEqualTo: emailController.text.trim())
-          .get();
-
-      if (emailQuery.docs.isEmpty) {
         if (!mounted) return;
+
+        Navigator.pop(context);
+
+        if (role == 'Service Consumer') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ConsumerScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ProviderScreen()),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+
         Navigator.pop(context);
 
         _showLoginFailedDialog();
-        return;
       }
-
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      if (!mounted) return;
-
-      Navigator.pop(context);
-
-      if(userType == "userConsumer"){
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ConsumerScreen()),
-        );
-      }
-      else if(userType == "userProvider"){
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProviderScreen()),
-        );
-      }
-
-    } catch (e) {
-      if (!mounted) return;
-
-      Navigator.pop(context);
-
-      _showLoginFailedDialog();
     }
   }
-}
 
-void _showLoginFailedDialog() {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Login Failed'),
-      content: const Text('Email, password or Role incorrect.'),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
+  void _showLoginFailedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: const Text('Email, password or Role incorrect.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +128,6 @@ void _showLoginFailedDialog() {
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -202,7 +158,6 @@ void _showLoginFailedDialog() {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  // Card with form
                   Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -215,66 +170,77 @@ void _showLoginFailedDialog() {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Email
-                            const _FieldLabel(icon: Icons.email_outlined, label: 'Email'),
+                            const _FieldLabel(
+                                icon: Icons.email_outlined, label: 'Email'),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: emailController,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: _inputDecoration(hint: 'Enter your email'),
+                              style: const TextStyle(color: Colors.black),
+                              decoration:
+                              _inputDecoration(hint: 'Enter your email'),
                               validator: _validateEmail,
                             ),
                             const SizedBox(height: 14),
-
-                            // Password
-                            const _FieldLabel(icon: Icons.lock_outline, label: 'Password'),
+                            const _FieldLabel(
+                                icon: Icons.lock_outline, label: 'Password'),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: passwordController,
                               obscureText: obscurePassword,
+                              style: const TextStyle(color: Colors.black),
                               decoration: _inputDecoration(
                                 hint: 'Enter your password',
                                 suffix: IconButton(
-                                  icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                  onPressed: () => setState(() => obscurePassword = !obscurePassword),
+                                  icon: Icon(obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility),
+                                  onPressed: () => setState(
+                                          () => obscurePassword = !obscurePassword),
                                 ),
                               ),
                               validator: _validatePassword,
                             ),
                             const SizedBox(height: 14),
-
-                            // Role
-                            const _FieldLabel(icon: Icons.group_outlined, label: 'Role'),
+                            const _FieldLabel(
+                                icon: Icons.group_outlined, label: 'Role'),
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
                               value: role,
+                              style: const TextStyle(color: Colors.black),
                               items: const [
-                                DropdownMenuItem(value: 'Service Provider', child: Text('Service Provider')),
-                                DropdownMenuItem(value: 'Service Consumer', child: Text('Service Consumer')),
+                                DropdownMenuItem(
+                                    value: 'Service Provider',
+                                    child: Text('Service Provider')),
+                                DropdownMenuItem(
+                                    value: 'Service Consumer',
+                                    child: Text('Service Consumer')),
                               ],
-                              onChanged: (v) => setState(() => role = v ?? role),
-                              decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                              onChanged: (v) =>
+                                  setState(() => role = v ?? role),
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(), isDense: true),
                             ),
                             const SizedBox(height: 18),
-
-                            // Login button
                             SizedBox(
                               height: 46,
                               child: ElevatedButton(
                                 onPressed: _onLogin,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: primary,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
                                 ),
                                 child: const Text(
                                   'Login',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 12),
-
-                            // Don't have an account
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -284,7 +250,8 @@ void _showLoginFailedDialog() {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const SignUpScreen(),
+                                        builder: (context) =>
+                                        const SignUpScreen(),
                                       ),
                                     );
                                   },

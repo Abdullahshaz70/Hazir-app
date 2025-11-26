@@ -36,8 +36,104 @@ class _QueueState extends State<Queue> {
         .update({"customers": updated});
   }
 
-  void _startService(String name) {
-    setState(() => nowServing = name);
+  Future<void> _updateConsumerQueueStatus(String visitorUid, String bookingId, String newStatus) async {
+    if (visitorUid.isEmpty) return;
+    
+    try {
+      DocumentSnapshot consumerDoc = await FirebaseFirestore.instance
+          .collection('userConsumer')
+          .doc(visitorUid)
+          .get();
+      
+      if (consumerDoc.exists) {
+        var consumerData = consumerDoc.data() as Map<String, dynamic>;
+        List<dynamic> currentQueue = List.from(consumerData['currentQueue'] ?? []);
+        
+        for (int i = 0; i < currentQueue.length; i++) {
+          if (currentQueue[i]['bookingId'] == bookingId) {
+            currentQueue[i]['status'] = newStatus;
+            break;
+          }
+        }
+        
+        await FirebaseFirestore.instance
+            .collection('userConsumer')
+            .doc(visitorUid)
+            .update({'currentQueue': currentQueue});
+      }
+    } catch (e) {
+      debugPrint("Error updating consumer queue status: $e");
+    }
+  }
+
+  Future<void> _removeFromConsumerQueue(String visitorUid, String bookingId) async {
+    if (visitorUid.isEmpty) return;
+    
+    try {
+      DocumentSnapshot consumerDoc = await FirebaseFirestore.instance
+          .collection('userConsumer')
+          .doc(visitorUid)
+          .get();
+      
+      if (consumerDoc.exists) {
+        var consumerData = consumerDoc.data() as Map<String, dynamic>;
+        List<dynamic> currentQueue = List.from(consumerData['currentQueue'] ?? []);
+        
+        currentQueue.removeWhere((item) => item['bookingId'] == bookingId);
+        
+        await FirebaseFirestore.instance
+            .collection('userConsumer')
+            .doc(visitorUid)
+            .update({'currentQueue': currentQueue});
+      }
+    } catch (e) {
+      debugPrint("Error removing from consumer queue: $e");
+    }
+  }
+
+  Future<void> _updateConsumerQueuePositions(List<Map<String, dynamic>> queue) async {
+    for (int i = 0; i < queue.length; i++) {
+      String visitorUid = queue[i]['uid'] ?? '';
+      String bookingId = queue[i]['bookingId'] ?? '';
+      int newPosition = i + 1;
+      
+      if (visitorUid.isEmpty) continue;
+      
+      try {
+        DocumentSnapshot consumerDoc = await FirebaseFirestore.instance
+            .collection('userConsumer')
+            .doc(visitorUid)
+            .get();
+        
+        if (consumerDoc.exists) {
+          var consumerData = consumerDoc.data() as Map<String, dynamic>;
+          List<dynamic> currentQueue = List.from(consumerData['currentQueue'] ?? []);
+          
+          for (int j = 0; j < currentQueue.length; j++) {
+            if (currentQueue[j]['bookingId'] == bookingId) {
+              currentQueue[j]['queuePosition'] = newPosition;
+              break;
+            }
+          }
+          
+          await FirebaseFirestore.instance
+              .collection('userConsumer')
+              .doc(visitorUid)
+              .update({'currentQueue': currentQueue});
+        }
+      } catch (e) {
+        debugPrint("Error updating consumer queue position: $e");
+      }
+    }
+  }
+
+  void _startService(Map<String, dynamic> customer) async {
+    String visitorUid = customer['uid'] ?? '';
+    String bookingId = customer['bookingId'] ?? '';
+    
+    setState(() => nowServing = customer['name']);
+
+    await _updateConsumerQueueStatus(visitorUid, bookingId, "Serving");
   }
 
   void _skipCustomer(int index, List<Map<String, dynamic>> queue) {
@@ -47,8 +143,16 @@ class _QueueState extends State<Queue> {
 
   Future<void> _removeCustomer(
       int index, List<Map<String, dynamic>> queue) async {
+    Map<String, dynamic> removedCustomer = queue[index];
+    String visitorUid = removedCustomer['uid'] ?? '';
+    String bookingId = removedCustomer['bookingId'] ?? '';
+    
     queue.removeAt(index);
     await _updateQueue(queue);
+
+    await _removeFromConsumerQueue(visitorUid, bookingId);
+
+    await _updateConsumerQueuePositions(queue);
   }
 
   Future<void> _callNext(List<Map<String, dynamic>> queue) async {
@@ -58,10 +162,18 @@ class _QueueState extends State<Queue> {
       return;
     }
 
-    setState(() => nowServing = queue.first["name"]);
+    Map<String, dynamic> servedCustomer = queue.first;
+    String visitorUid = servedCustomer['uid'] ?? '';
+    String bookingId = servedCustomer['bookingId'] ?? '';
+
+    setState(() => nowServing = servedCustomer["name"]);
 
     queue.removeAt(0);
     await _updateQueue(queue);
+
+    await _removeFromConsumerQueue(visitorUid, bookingId);
+
+    await _updateConsumerQueuePositions(queue);
   }
 
 
@@ -135,7 +247,7 @@ class _QueueState extends State<Queue> {
                                     "Start",
                                     Colors.green[100]!,
                                     Colors.green[800]!,
-                                    () => _startService(c['name']),
+                                    () => _startService(c),
                                   ),
                                   const SizedBox(width: 8),
                                   _queueActionButton(

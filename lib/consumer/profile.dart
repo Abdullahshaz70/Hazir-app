@@ -85,7 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_userData == null) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: const Color.fromRGBO(2, 62, 138, 1),
+          foregroundColor: Colors.white,
           title: const Text('Profile'),
         ),
         body: const Center(
@@ -96,7 +97,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: const Color.fromRGBO(2, 62, 138, 1),
+        foregroundColor: Colors.white,
         title: const Text('Profile'),
         actions: [
           if (_isEditing)
@@ -104,7 +106,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: _updateUserData,
               child: const Text(
                 'Save',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
         ],
@@ -116,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: const Color.fromRGBO(2, 62, 138, 1),
               child: Text(
                 (_userData!['name'] != null && _userData!['name'].isNotEmpty)
                     ? _userData!['name'][0].toUpperCase()
@@ -167,29 +173,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            IconButton(
+              icon: Icon(_isEditing ? Icons.close : Icons.edit),
+              onPressed: () {
+                setState(() {
+                  if (_isEditing) {
+                    _nameController.text = _userData!['name'] ?? '';
+                    _isEditing = false;
+                  } else {
+                    _isEditing = true;
+                  }
+                });
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          enabled: isEditable,
+          enabled: _isEditing,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
             ),
             filled: true,
-            fillColor: Colors.grey[200],
+            fillColor: _isEditing ? Colors.white : Colors.grey[200],
           ),
-          onChanged: (_) {
-            setState(() {
-              _isEditing = true;
-            });
-          },
         ),
       ],
     );

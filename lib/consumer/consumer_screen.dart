@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-// import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher.dart'; 
 import 'profile.dart';
 import 'settings.dart';
 import 'help.dart';
@@ -21,13 +21,10 @@ class ConsumerScreen extends StatefulWidget {
 
 class _ConsumerScreen extends State<ConsumerScreen> {
   final MapController _mapController = MapController();
-
   LatLng _currentLocation = const LatLng(31.514, 74.354);
   String _currentAddress = "Lahore";
   bool _isLocating = false;
-
   List<Map<String, dynamic>> _providersOnMap = [];
-
   Map<String, dynamic>? _selectedShopProfile;
   bool _isProfileLoading = false;
 
@@ -40,13 +37,13 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     });
   }
 
-
   Future<void> _getPlaceName(double lat, double lng) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty && mounted) {
         Placemark place = placemarks[0];
-        String formattedAddress = "${place.subLocality ?? place.thoroughfare ?? ""}, ${place.locality ?? ""}";
+        String formattedAddress =
+            "${place.subLocality ?? place.thoroughfare ?? ""}, ${place.locality ?? ""}";
         setState(() {
           _currentAddress = formattedAddress.trim();
         });
@@ -64,7 +61,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             .collection('userConsumer')
             .doc(user.uid)
             .get();
-        if (doc.exists && doc.data() is Map<String, dynamic>) {
+        if (doc.exists && doc.data() is Map) {
           var data = doc.data() as Map<String, dynamic>;
           if (data.containsKey('location') && data['location'] is Map) {
             var locMap = data['location'] as Map<String, dynamic>;
@@ -84,20 +81,19 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   }
 
   Future<void> _checkAndRequestLocation() async {
-
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
     } else {
       _getUserLocation();
     }
   }
 
   Future<void> _getUserLocation() async {
-
     setState(() => _isLocating = true);
     try {
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
       LatLng newPos = LatLng(position.latitude, position.longitude);
       if (mounted) {
         setState(() => _currentLocation = newPos);
@@ -111,14 +107,93 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     }
   }
 
+  Future<void> _openNavigation(double destLat, double destLng, String shopName) async {
+    bool? shouldNavigate = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Navigate to Shop'),
+          content: Text('Do you want to navigate to $shopName?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromRGBO(2, 62, 138, 1),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Navigate'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldNavigate != true) return;
+
+    final List<Map<String, String>> mapOptions = [
+      {
+        'name': 'Google Maps',
+        'url': 'google.navigation:q=$destLat,$destLng',
+        'fallback': 'https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng'
+      },
+      {
+        'name': 'Apple Maps',
+        'url': 'maps://?daddr=$destLat,$destLng',
+        'fallback': 'https://maps.apple.com/?daddr=$destLat,$destLng'
+      },
+      {
+        'name': 'Waze',
+        'url': 'waze://?ll=$destLat,$destLng&navigate=yes',
+        'fallback': 'https://www.waze.com/ul?ll=$destLat,$destLng&navigate=yes'
+      },
+    ];
+
+    bool launched = false;
+
+    for (var mapOption in mapOptions) {
+      try {
+        final Uri uri = Uri.parse(mapOption['url']!);
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (launched) break;
+        }
+      } catch (e) {
+        debugPrint("Could not launch ${mapOption['name']}: $e");
+      }
+    }
+
+    if (!launched && mounted) {
+      try {
+        final Uri webUri = Uri.parse(
+            'https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng');
+        launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      } catch (e) {
+        debugPrint("Could not launch web maps: $e");
+      }
+    }
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open maps app. Please install Google Maps or another navigation app.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   Future<List<Map<String, dynamic>>> getNearbyProviders(
-      String category, LatLng userLoc,
-      {double radiusKm = 20.0, int limit = 5}) async {
-
+    String category,
+    LatLng userLoc, {
+    double radiusKm = 20.0,
+    int limit = 5,
+  }) async {
     double radiusMeters = radiusKm * 1000;
     List<Map<String, dynamic>> nearbyProviders = [];
-
     final snapshot = await FirebaseFirestore.instance
         .collection("userProvider")
         .where("shopType", isEqualTo: category)
@@ -127,17 +202,17 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     for (var doc in snapshot.docs) {
       final data = doc.data();
       dynamic locationData = data["location"];
-
       if (locationData is! GeoPoint) continue;
-
       final GeoPoint gp = locationData;
       double lat = gp.latitude;
       double lng = gp.longitude;
-
       if (lat == 0.0 && lng == 0.0) continue;
 
       double distance = Geolocator.distanceBetween(
-        userLoc.latitude, userLoc.longitude, lat, lng,
+        userLoc.latitude,
+        userLoc.longitude,
+        lat,
+        lng,
       );
 
       if (distance <= radiusMeters) {
@@ -154,11 +229,9 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     }
 
     nearbyProviders.sort((a, b) => a["distance"].compareTo(b["distance"]));
-
     if (nearbyProviders.length > limit) {
       return nearbyProviders.sublist(0, limit);
     }
-
     return nearbyProviders;
   }
 
@@ -168,8 +241,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           .collection('userProvider')
           .doc(providerId)
           .get();
-
-      if (doc.exists && doc.data() is Map<String, dynamic>) {
+      if (doc.exists && doc.data() is Map) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         data['uid'] = doc.id;
         return data;
@@ -179,7 +251,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     }
     return null;
   }
-
 
   Future<void> _handleCategoryTap(String category) async {
     setState(() {
@@ -205,11 +276,9 @@ class _ConsumerScreen extends State<ConsumerScreen> {
 
     final closest = providers.first;
     LatLng target = LatLng(closest["lat"], closest["lng"]);
-
     setState(() {
       _providersOnMap = providers;
     });
-
     _mapController.move(target, 16);
   }
 
@@ -220,7 +289,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     });
 
     final profile = await getProviderProfile(providerId);
-
     if (mounted) {
       setState(() {
         _selectedShopProfile = profile;
@@ -230,11 +298,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     }
   }
 
-
-
   List<Marker> _getMarkers() {
     List<Marker> markers = [];
-
     markers.add(
       Marker(
         point: _currentLocation,
@@ -252,31 +317,44 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           height: 60,
           child: Tooltip(
             message: provider["name"],
-            child: const Icon(Icons.store_mall_directory, color: Colors.blue, size: 40),
+            child: const Icon(Icons.store_mall_directory,
+                color: Colors.blue, size: 40),
           ),
         ),
       );
     }
-
     return markers;
   }
 
   Widget _buildShopProfileView() {
     if (_isProfileLoading) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
+      return const Center(
+          child: Padding(
+              padding: EdgeInsets.all(20), child: CircularProgressIndicator()));
     }
-
     if (_selectedShopProfile == null) {
-      return const Center(child: Padding(padding: EdgeInsets.all(20), child: Text("Shop profile unavailable.")));
+      return const Center(
+          child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Text("Shop profile unavailable.")));
     }
 
     final profile = _selectedShopProfile!;
-
-    final String shopName = profile["name"] ?? profile["ownerName"] ?? "Unknown Shop";
+    final String shopName =
+        profile["name"] ?? profile["ownerName"] ?? "Unknown Shop";
     final String ownerName = profile["ownerName"] ?? "N/A";
     final String phone = profile["contactNumber"] ?? "N/A";
     final String shopType = profile["shopType"] ?? "Service Provider";
     final String uid = profile["uid"] ?? "N/A";
+    
+    final dynamic locationData = profile["location"];
+    double? shopLat;
+    double? shopLng;
+    
+    if (locationData is GeoPoint) {
+      shopLat = locationData.latitude;
+      shopLng = locationData.longitude;
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -286,9 +364,14 @@ class _ConsumerScreen extends State<ConsumerScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                shopName,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
+              Expanded(
+                child: Text(
+                  shopName,
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.close),
@@ -317,16 +400,41 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             subtitle: Text(phone),
             dense: true,
           ),
-
           ListTile(
             leading: const Icon(Icons.phone, color: Colors.grey),
             title: const Text("ID"),
             subtitle: Text(uid),
             dense: true,
           ),
-
           const SizedBox(height: 20),
-
+          
+          if (shopLat != null && shopLng != null)
+            Center(
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.directions, size: 24),
+                  label: const Text(
+                    "Navigate to Shop",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 5,
+                  ),
+                  onPressed: () {
+                    _openNavigation(shopLat!, shopLng!, shopName);
+                  },
+                ),
+              ),
+            ),
+          const SizedBox(height: 10),
+          
           Center(
             child: SizedBox(
               width: double.infinity,
@@ -348,17 +456,18 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                 onPressed: () {
                   if (_selectedShopProfile != null) {
                     String providerId = _selectedShopProfile!["uid"] ?? "";
-
                     if (providerId.isNotEmpty && providerId != "N/A") {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ShopProfileScreen(providerId: providerId),
+                          builder: (context) =>
+                              ShopProfileScreen(providerId: providerId),
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Error: Invalid Provider ID")),
+                        const SnackBar(
+                            content: Text("Error: Invalid Provider ID")),
                       );
                     }
                   }
@@ -372,12 +481,12 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   }
 
   Widget _buildProviderListView(List<Map<String, dynamic>> providers) {
-
     return Column(
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8.0),
-          child: Text("Nearby Providers (Tap for Profile):", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          child: Text("Nearby Providers (Tap for Profile):",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ),
         Expanded(
           child: ListView.builder(
@@ -385,14 +494,15 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             itemBuilder: (context, index) {
               final provider = providers[index];
               final distanceKm = (provider["distance"] / 1000).toStringAsFixed(2);
-
               return ListTile(
                 leading: const Icon(Icons.storefront, color: Colors.blue),
-                title: Text(provider["name"], style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(provider["name"],
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text("Distance: $distanceKm km"),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  _handleShopTap(provider["id"], provider["lat"], provider["lng"]);
+                  _handleShopTap(
+                      provider["id"], provider["lat"], provider["lng"]);
                 },
               );
             },
@@ -402,10 +512,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     );
   }
 
-
   Widget _buildDraggableSheet() {
     final List<Map<String, dynamic>> categories = [
-
       {
         "name": "Karyana Store",
         "shopType": "Karyana Store",
@@ -438,7 +546,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
       },
     ];
 
-
     return DraggableScrollableSheet(
       initialChildSize: 0.10,
       minChildSize: 0.10,
@@ -449,7 +556,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
             boxShadow: [
-              BoxShadow(color: Colors.black26, blurRadius: 10, spreadRadius: 1)
+              BoxShadow(
+                  color: Colors.black26, blurRadius: 10, spreadRadius: 1)
             ],
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -458,12 +566,14 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               const SizedBox(height: 10),
               Center(
                 child: Container(
-                  width: 45, height: 5,
-                  decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(10)),
+                  width: 45,
+                  height: 5,
+                  decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(10)),
                 ),
               ),
               const SizedBox(height: 12),
-
               if (_selectedShopProfile != null || _isProfileLoading)
                 Expanded(
                   child: ListView(
@@ -479,7 +589,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                       const Text(
                         "Select a Category",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 15),
                       SizedBox(
@@ -487,24 +598,33 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: categories.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
                           itemBuilder: (context, index) {
                             final item = categories[index];
                             return GestureDetector(
-                              onTap: () => _handleCategoryTap(item["shopType"]),
+                              onTap: () =>
+                                  _handleCategoryTap(item["shopType"]),
                               child: Container(
-                                width: 140, padding: const EdgeInsets.all(12),
+                                width: 140,
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: item["color"].withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: item["color"], width: 2),
+                                  border:
+                                      Border.all(color: item["color"], width: 2),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(item["icon"] as IconData, color: item["color"], size: 26),
+                                    Icon(item["icon"] as IconData,
+                                        color: item["color"], size: 26),
                                     const SizedBox(height: 5),
-                                    Text(item["name"], textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w600, color: item["color"])),
+                                    Text(item["name"],
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: item["color"])),
                                   ],
                                 ),
                               ),
@@ -513,14 +633,15 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-
                       if (_providersOnMap.isNotEmpty)
                         SizedBox(
                           height: 400,
                           child: _buildProviderListView(_providersOnMap),
                         )
                       else
-                        const Center(child: Text("Select a category above to find nearby shops.")),
+                        const Center(
+                            child: Text(
+                                "Select a category above to find nearby shops.")),
                     ],
                   ),
                 ),
@@ -530,7 +651,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -624,11 +744,12 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const MyBookingsScreen()),
                 );
               },
             ),
-        ListTile(
+            ListTile(
               leading: const Icon(Icons.help),
               title: const Text('Help'),
               onTap: () {
@@ -652,7 +773,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             children: [
               TileLayer(
                 urlTemplate:
-                'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=S3Rrhs7ZQnmWbyTvy7Es',
+                    'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=S3Rrhs7ZQnmWbyTvy7Es',
                 userAgentPackageName: 'com.example.hazir',
               ),
               MarkerLayer(
@@ -660,7 +781,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               ),
             ],
           ),
-
           Positioned(
             top: 20,
             right: 20,
@@ -670,13 +790,12 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               onPressed: _getUserLocation,
               child: _isLocating
                   ? const SizedBox(
-                  width: 15,
-                  height: 15,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.my_location, color: Colors.black87),
             ),
           ),
-
           _buildDraggableSheet(),
         ],
       ),

@@ -11,6 +11,8 @@ import 'settings.dart';
 import 'help.dart';
 import 'customer_join_screen.dart';
 import 'my_bookings.dart';
+import 'package:flutter/services.dart';
+
 
 class ConsumerScreen extends StatefulWidget {
   const ConsumerScreen({super.key});
@@ -27,6 +29,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   List<Map<String, dynamic>> _providersOnMap = [];
   Map<String, dynamic>? _selectedShopProfile;
   bool _isProfileLoading = false;
+
+  static const platform = MethodChannel('contact_channel');
 
   @override
   void initState() {
@@ -326,6 +330,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     return markers;
   }
 
+
+
   Widget _buildShopProfileView() {
     if (_isProfileLoading) {
       return const Center(
@@ -394,18 +400,41 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             subtitle: Text(shopType),
             dense: true,
           ),
+          
+          
           ListTile(
             leading: const Icon(Icons.phone, color: Colors.grey),
             title: const Text("Contact"),
             subtitle: Text(phone),
             dense: true,
+            onTap: phone != "N/A" 
+                ? () async {
+                    final Uri phoneUri = Uri.parse('tel:$phone');
+                    try {
+                      await launchUrl(
+                        phoneUri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    } catch (e) {
+                      debugPrint("Error launching dialer: $e");
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Could not open dialer. Please check permissions.'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    }
+                  }
+                : null,
           ),
-          ListTile(
-            leading: const Icon(Icons.phone, color: Colors.grey),
-            title: const Text("ID"),
-            subtitle: Text(uid),
-            dense: true,
-          ),
+          // ListTile(
+          //   leading: const Icon(Icons.phone, color: Colors.grey),
+          //   title: const Text("ID"),
+          //   subtitle: Text(uid),
+          //   dense: true,
+          // ),
           const SizedBox(height: 20),
           
           if (shopLat != null && shopLng != null)

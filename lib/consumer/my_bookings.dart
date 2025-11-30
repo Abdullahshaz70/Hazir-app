@@ -1,194 +1,3 @@
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter/material.dart';
-
-// class MyBookingsScreen extends StatelessWidget {
-//   const MyBookingsScreen({super.key});
-
-//   final Color hazirBlue = const Color.fromRGBO(2, 62, 138, 1);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final User? user = FirebaseAuth.instance.currentUser;
-
-//     return Scaffold(
-//       backgroundColor: Colors.grey[50],
-//       appBar: AppBar(
-//         title: const Text("My Bookings"),
-//         backgroundColor: Colors.white,
-//         foregroundColor: hazirBlue,
-//         elevation: 0,
-//       ),
-//       body: user == null
-//           ? const Center(child: Text("Please log in to see bookings."))
-//           : StreamBuilder<DocumentSnapshot>(
-//         stream: FirebaseFirestore.instance
-//             .collection('userConsumer')
-//             .doc(user.uid)
-//             .snapshots(),
-//         builder: (context, snapshot) {
-//           if (snapshot.hasError) {
-//             return const Center(child: Text("Error loading bookings"));
-//           }
-//           if (!snapshot.hasData) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-
-//           final data = snapshot.data!.data() as Map<String, dynamic>?;
-//           final currentQueueRaw = data?['currentQueue'];
-
-//           List<Map<String, dynamic>> activeBookings = [];
-
-//           if (currentQueueRaw != null && currentQueueRaw is List) {
-//             for (var item in currentQueueRaw) {
-//               if (item is Map<String, dynamic> &&
-//                   item['status'] != 'Completed') {
-//                 activeBookings.add(item);
-//               }
-//             }
-//           }
-
-//           if (activeBookings.isEmpty) {
-//             return Center(
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
-//                 children: [
-//                   Icon(Icons.event_busy,
-//                       size: 60, color: Colors.grey[400]),
-//                   const SizedBox(height: 16),
-//                   Text(
-//                     "No active bookings",
-//                     style:
-//                     TextStyle(color: Colors.grey[600], fontSize: 16),
-//                   ),
-//                 ],
-//               ),
-//             );
-//           }
-
-//           return ListView.builder(
-//             padding: const EdgeInsets.all(16.0),
-//             itemCount: activeBookings.length,
-//             itemBuilder: (context, index) {
-//               final booking = activeBookings[index];
-
-//               final String shopName =
-//                   booking['shopName'] ?? "Unknown Shop";
-//               final String service = booking['service'] ?? "Service";
-//               final int position = booking['queuePosition'] ?? 0;
-//               final String status = booking['status'] ?? "Waiting";
-//               final int price = booking['price'] ?? 0;
-
-//               return Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   if (index == 0)
-//                     const Padding(
-//                       padding: EdgeInsets.only(bottom: 12),
-//                       child: Text(
-//                         "Active Tickets",
-//                         style: TextStyle(
-//                             fontSize: 18, fontWeight: FontWeight.bold),
-//                       ),
-//                     ),
-//                   Card(
-//                     elevation: 4,
-//                     shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(16)),
-//                     child: Container(
-//                       padding: const EdgeInsets.all(20),
-//                       decoration: BoxDecoration(
-//                         borderRadius: BorderRadius.circular(16),
-//                         border: Border.all(
-//                             color: hazirBlue.withOpacity(0.1)),
-//                       ),
-//                       child: Column(
-//                         children: [
-//                           Row(
-//                             mainAxisAlignment:
-//                             MainAxisAlignment.spaceBetween,
-//                             children: [
-//                               Expanded(
-//                                 child: Column(
-//                                   crossAxisAlignment:
-//                                   CrossAxisAlignment.start,
-//                                   children: [
-//                                     Text(
-//                                       shopName,
-//                                       style: const TextStyle(
-//                                           fontSize: 20,
-//                                           fontWeight: FontWeight.bold),
-//                                     ),
-//                                     const SizedBox(height: 4),
-//                                     Text(
-//                                       service,
-//                                       style: TextStyle(
-//                                           color: Colors.grey[600],
-//                                           fontSize: 14),
-//                                     ),
-//                                   ],
-//                                 ),
-//                               ),
-//                               Container(
-//                                 padding: const EdgeInsets.symmetric(
-//                                     horizontal: 12, vertical: 6),
-//                                 decoration: BoxDecoration(
-//                                   color: status == "Waiting"
-//                                       ? Colors.orange.withOpacity(0.1)
-//                                       : Colors.green.withOpacity(0.1),
-//                                   borderRadius: BorderRadius.circular(20),
-//                                 ),
-//                                 child: Text(
-//                                   status,
-//                                   style: TextStyle(
-//                                     color: status == "Waiting"
-//                                         ? Colors.orange
-//                                         : Colors.green,
-//                                     fontWeight: FontWeight.bold,
-//                                   ),
-//                                 ),
-//                               )
-//                             ],
-//                           ),
-//                           const Divider(height: 30),
-//                           Row(
-//                             mainAxisAlignment:
-//                             MainAxisAlignment.spaceBetween,
-//                             children: [
-//                               _buildInfoColumn("Ticket", "#$position"),
-//                               _buildInfoColumn("Price", "Rs. $price"),
-//                               _buildInfoColumn(
-//                                   "Est. Wait", "${position * 15}m"),
-//                             ],
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   ),
-//                   const SizedBox(height: 16),
-//                 ],
-//               );
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   Widget _buildInfoColumn(String label, String value) {
-//     return Column(
-//       children: [
-//         Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-//         const SizedBox(height: 4),
-//         Text(value,
-//             style: TextStyle(
-//                 color: hazirBlue, fontWeight: FontWeight.bold, fontSize: 16)),
-//       ],
-//     );
-//   }
-// }
-
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -198,64 +7,49 @@ class MyBookingsScreen extends StatelessWidget {
 
   final Color hazirBlue = const Color.fromRGBO(2, 62, 138, 1);
 
-  Future<void> _cancelBooking(BuildContext context, Map<String, dynamic> booking, String userId) async {
+  Future<bool> _cancelBooking(BuildContext context, Map<String, dynamic> booking, String userId) async {
     try {
-      final String? shopId = booking['shopId'];
-      final String? bookingId = booking['bookingId'];
+      final shopId = booking['providerId'];
+      final bookingId = booking['bookingId'];
 
       if (shopId == null || bookingId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Invalid booking data")),
         );
-        return;
+        return false;
       }
 
-      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (_) => const Center(child: CircularProgressIndicator()),
       );
 
       final batch = FirebaseFirestore.instance.batch();
 
-      // 1. Remove from user's currentQueue
       final userRef = FirebaseFirestore.instance.collection('userConsumer').doc(userId);
       batch.update(userRef, {
         'currentQueue': FieldValue.arrayRemove([booking])
       });
 
-      // 2. Remove from provider's queue
       final shopRef = FirebaseFirestore.instance.collection('userProvider').doc(shopId);
       final shopDoc = await shopRef.get();
-      
+
       if (shopDoc.exists) {
-        final shopData = shopDoc.data() as Map<String, dynamic>?;
-        final queue = shopData?['queue'] as List?;
-        
-        if (queue != null) {
-          // Find and remove the booking from provider's queue
-          final updatedQueue = queue.where((item) {
-            if (item is Map<String, dynamic>) {
-              return item['bookingId'] != bookingId;
-            }
-            return true;
-          }).toList();
-          
-          // Recalculate queue positions
-          for (int i = 0; i < updatedQueue.length; i++) {
-            if (updatedQueue[i] is Map<String, dynamic>) {
-              updatedQueue[i]['queuePosition'] = i + 1;
-            }
-          }
-          
-          batch.update(shopRef, {'queue': updatedQueue});
+        final data = shopDoc.data() as Map<String, dynamic>;
+        final customers = List<Map<String, dynamic>>.from(data['customers'] ?? []);
+
+        final updated = customers.where((c) => c['bookingId'] != bookingId).toList();
+
+        for (int i = 0; i < updated.length; i++) {
+          updated[i]['queuePosition'] = i + 1;
         }
+
+        batch.update(shopRef, {'customers': updated});
       }
 
       await batch.commit();
 
-      // Close loading dialog
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -264,32 +58,26 @@ class MyBookingsScreen extends StatelessWidget {
           backgroundColor: Colors.green,
         ),
       );
+
+      return false;
     } catch (e) {
-      // Close loading dialog if open
       Navigator.of(context).pop();
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error cancelling booking: $e")),
       );
+      return false;
     }
   }
 
   Future<bool?> _showCancelDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         title: const Text("Cancel Booking"),
         content: const Text("Are you sure you want to cancel this booking?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text("No"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text("Yes, Cancel"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("No")),
+          TextButton(onPressed: () => Navigator.pop(context, true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text("Yes, Cancel")),
         ],
       ),
     );
@@ -297,7 +85,7 @@ class MyBookingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -305,205 +93,144 @@ class MyBookingsScreen extends StatelessWidget {
         title: const Text("My Bookings"),
         backgroundColor: Colors.white,
         foregroundColor: hazirBlue,
-        elevation: 0,
       ),
       body: user == null
           ? const Center(child: Text("Please log in to see bookings."))
           : StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('userConsumer')
-            .doc(user.uid)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(child: Text("Error loading bookings"));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+              stream: FirebaseFirestore.instance.collection('userConsumer').doc(user.uid).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-          final data = snapshot.data!.data() as Map<String, dynamic>?;
-          final currentQueueRaw = data?['currentQueue'];
+                final data = snapshot.data!.data() as Map<String, dynamic>?;
+                final raw = data?['currentQueue'];
 
-          List<Map<String, dynamic>> activeBookings = [];
+                final bookings = <Map<String, dynamic>>[];
 
-          if (currentQueueRaw != null && currentQueueRaw is List) {
-            for (var item in currentQueueRaw) {
-              if (item is Map<String, dynamic> &&
-                  item['status'] != 'Completed') {
-                activeBookings.add(item);
-              }
-            }
-          }
+                if (raw is List) {
+                  for (var v in raw) {
+                    if (v is Map<String, dynamic> && v['status'] != 'Completed') {
+                      bookings.add(v);
+                    }
+                  }
+                }
 
-          if (activeBookings.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.event_busy,
-                      size: 60, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    "No active bookings",
-                    style:
-                    TextStyle(color: Colors.grey[600], fontSize: 16),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: activeBookings.length,
-            itemBuilder: (context, index) {
-              final booking = activeBookings[index];
-
-              final String shopName =
-                  booking['shopName'] ?? "Unknown Shop";
-              final String service = booking['service'] ?? "Service";
-              final int position = booking['queuePosition'] ?? 0;
-              final String status = booking['status'] ?? "Waiting";
-              final int price = booking['price'] ?? 0;
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (index == 0)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        "Active Tickets",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                if (bookings.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.event_busy, size: 60, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text("No active bookings", style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                      ],
                     ),
-                  Dismissible(
-                    key: Key(booking['bookingId'] ?? 'booking_$index'),
-                    direction: DismissDirection.endToStart,
-                    confirmDismiss: (direction) async {
-                      return await _showCancelDialog(context);
-                    },
-                    onDismissed: (direction) {
-                      _cancelBooking(context, booking, user.uid);
-                    },
-                    background: Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 20),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.delete, color: Colors.white, size: 32),
-                          SizedBox(height: 4),
-                          Text(
-                            "Cancel",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    child: Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: hazirBlue.withOpacity(0.1)),
-                        ),
-                        child: Column(
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: bookings.length,
+                  itemBuilder: (context, index) {
+                    final b = bookings[index];
+
+                    return Dismissible(
+                      key: Key(b['bookingId']),
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss: (_) async {
+                        final confirm = await _showCancelDialog(context);
+                        if (confirm == true) {
+                          return await _cancelBooking(context, b, user.uid);
+                        }
+                        return false;
+                      },
+                      background: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.only(right: 20),
+                        alignment: Alignment.centerRight,
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        shopName,
-                                        style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        service,
-                                        style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 14),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: status == "Waiting"
-                                        ? Colors.orange.withOpacity(0.1)
-                                        : Colors.green.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    status,
-                                    style: TextStyle(
-                                      color: status == "Waiting"
-                                          ? Colors.orange
-                                          : Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                            const Divider(height: 30),
-                            Row(
-                              mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildInfoColumn("Ticket", "#$position"),
-                                _buildInfoColumn("Price", "Rs. $price"),
-                                _buildInfoColumn(
-                                    "Est. Wait", "${position * 15}m"),
-                              ],
-                            ),
+                            Icon(Icons.delete, color: Colors.white, size: 32),
+                            SizedBox(height: 4),
+                            Text("Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
-                    ),
+                      child: BookingCard(b, hazirBlue),
+                    );
+                  },
+                );
+              },
+            ),
+    );
+  }
+}
+
+class BookingCard extends StatelessWidget {
+  final Map<String, dynamic> b;
+  final Color hazirBlue;
+
+  const BookingCard(this.b, this.hazirBlue, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final shopName = b['shopName'] ?? "Unknown Shop";
+    final service = b['service'] ?? "Service";
+    final position = b['queuePosition'] ?? 0;
+    final status = b['status'] ?? "Waiting";
+    final price = b['price'] ?? 0;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: hazirBlue.withOpacity(0.1))),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(shopName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(service, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: status == "Waiting" ? Colors.orange.withOpacity(0.1) : Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                  child: Text(
+                    status,
+                    style: TextStyle(color: status == "Waiting" ? Colors.orange : Colors.green, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 16),
-                ],
-              );
-            },
-          );
-        },
+                )
+              ],
+            ),
+            const Divider(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _info("Ticket", "#$position"),
+                _info("Price", "Rs. $price"),
+                _info("Est. Wait", "${position * 15}m"),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInfoColumn(String label, String value) {
+  Widget _info(String label, String value) {
     return Column(
       children: [
         Text(label, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
         const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                color: hazirBlue, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(value, style: TextStyle(color: hazirBlue, fontWeight: FontWeight.bold, fontSize: 16)),
       ],
     );
   }

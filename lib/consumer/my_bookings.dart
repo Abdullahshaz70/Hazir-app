@@ -7,67 +7,68 @@ class MyBookingsScreen extends StatelessWidget {
 
   final Color hazirBlue = const Color.fromRGBO(2, 62, 138, 1);
 
-  Future<bool> _cancelBooking(BuildContext context, Map<String, dynamic> booking, String userId) async {
-    try {
-      final shopId = booking['providerId'];
-      final bookingId = booking['bookingId'];
+Future<bool> _cancelBooking(BuildContext context, Map<String, dynamic> booking, String userId) async {
+  try {
+    final shopId = booking['providerId'];
+    final bookingId = booking['bookingId'];
 
-      if (shopId == null || bookingId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid booking data")),
-        );
-        return false;
-      }
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
-
-      final batch = FirebaseFirestore.instance.batch();
-
-      final userRef = FirebaseFirestore.instance.collection('userConsumer').doc(userId);
-      batch.update(userRef, {
-        'currentQueue': FieldValue.arrayRemove([booking])
-      });
-
-      final shopRef = FirebaseFirestore.instance.collection('userProvider').doc(shopId);
-      final shopDoc = await shopRef.get();
-
-      if (shopDoc.exists) {
-        final data = shopDoc.data() as Map<String, dynamic>;
-        final customers = List<Map<String, dynamic>>.from(data['customers'] ?? []);
-
-        final updated = customers.where((c) => c['bookingId'] != bookingId).toList();
-
-        for (int i = 0; i < updated.length; i++) {
-          updated[i]['queuePosition'] = i + 1;
-        }
-
-        batch.update(shopRef, {'customers': updated});
-      }
-
-      await batch.commit();
-
-      Navigator.of(context).pop();
-
+    if (shopId == null || bookingId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Booking cancelled successfully"),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      return false;
-    } catch (e) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error cancelling booking: $e")),
+        const SnackBar(content: Text("Invalid booking data")),
       );
       return false;
     }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    final userRef = FirebaseFirestore.instance.collection('userConsumer').doc(userId);
+    batch.update(userRef, {
+      'currentQueue': FieldValue.arrayRemove([booking])
+    });
+
+    final shopRef = FirebaseFirestore.instance.collection('userProvider').doc(shopId);
+    final shopDoc = await shopRef.get();
+
+    if (shopDoc.exists) {
+      final data = shopDoc.data() as Map<String, dynamic>;
+      final customers = List<Map<String, dynamic>>.from(data['customers'] ?? []);
+
+      final updated = customers.where((c) => c['bookingId'] != bookingId).toList();
+
+      for (int i = 0; i < updated.length; i++) {
+        updated[i]['queuePosition'] = i + 1;
+      }
+
+      batch.update(shopRef, {'customers': updated});
+    }
+
+    await batch.commit();
+
+    Navigator.of(context, rootNavigator: true).pop();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Booking cancelled successfully"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    return false;
+  } catch (e) {
+    Navigator.of(context, rootNavigator: true).pop();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error cancelling booking: $e")),
+    );
+    return false;
   }
+}
 
   Future<bool?> _showCancelDialog(BuildContext context) {
     return showDialog<bool>(

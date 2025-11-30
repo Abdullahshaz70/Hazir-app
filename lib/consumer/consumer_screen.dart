@@ -5,14 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:url_launcher/url_launcher.dart'; 
+import 'package:url_launcher/url_launcher.dart';
 import 'profile.dart';
 import 'settings.dart';
 import 'help.dart';
 import 'customer_join_screen.dart';
 import 'my_bookings.dart';
 import 'package:flutter/services.dart';
-
 
 class ConsumerScreen extends StatefulWidget {
   const ConsumerScreen({super.key});
@@ -36,8 +35,8 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndRequestLocation();
       _loadLocationFromDatabase();
+      _checkAndRequestLocation();
     });
   }
 
@@ -85,27 +84,98 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   }
 
   Future<void> _checkAndRequestLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Location services are disabled.'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Turn On',
+              textColor: Colors.white,
+              onPressed: () async {
+                await Geolocator.openLocationSettings();
+                await Future.delayed(const Duration(seconds: 1));
+                _checkAndRequestLocation();
+              },
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      return;
+    }
+
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-    } else {
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission denied'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Location permission permanently denied. Please enable in settings.'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Settings',
+              textColor: Colors.white,
+              onPressed: () async {
+                await Geolocator.openAppSettings();
+              },
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
       _getUserLocation();
     }
   }
 
   Future<void> _getUserLocation() async {
+    if (_isLocating) return;
+
     setState(() => _isLocating = true);
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
       LatLng newPos = LatLng(position.latitude, position.longitude);
       if (mounted) {
         setState(() => _currentLocation = newPos);
+        _mapController.move(newPos, 16);
+        _getPlaceName(position.latitude, position.longitude);
       }
-      _mapController.move(newPos, 16);
-      _getPlaceName(position.latitude, position.longitude);
     } catch (e) {
       debugPrint("Error getting location: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to get location. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
@@ -191,11 +261,11 @@ class _ConsumerScreen extends State<ConsumerScreen> {
   }
 
   Future<List<Map<String, dynamic>>> getNearbyProviders(
-    String category,
-    LatLng userLoc, {
-    double radiusKm = 20.0,
-    int limit = 5,
-  }) async {
+      String category,
+      LatLng userLoc, {
+        double radiusKm = 20.0,
+        int limit = 5,
+      }) async {
     double radiusMeters = radiusKm * 1000;
     List<Map<String, dynamic>> nearbyProviders = [];
     final snapshot = await FirebaseFirestore.instance
@@ -330,8 +400,6 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     return markers;
   }
 
-
-
   Widget _buildShopProfileView() {
     if (_isProfileLoading) {
       return const Center(
@@ -352,11 +420,11 @@ class _ConsumerScreen extends State<ConsumerScreen> {
     final String phone = profile["contactNumber"] ?? "N/A";
     final String shopType = profile["shopType"] ?? "Service Provider";
     final String uid = profile["uid"] ?? "N/A";
-    
+
     final dynamic locationData = profile["location"];
     double? shopLat;
     double? shopLng;
-    
+
     if (locationData is GeoPoint) {
       shopLat = locationData.latitude;
       shopLng = locationData.longitude;
@@ -400,43 +468,36 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             subtitle: Text(shopType),
             dense: true,
           ),
-          
-          
+
           ListTile(
             leading: const Icon(Icons.phone, color: Colors.grey),
             title: const Text("Contact"),
             subtitle: Text(phone),
             dense: true,
-            onTap: phone != "N/A" 
+            onTap: phone != "N/A"
                 ? () async {
-                    final Uri phoneUri = Uri.parse('tel:$phone');
-                    try {
-                      await launchUrl(
-                        phoneUri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } catch (e) {
-                      debugPrint("Error launching dialer: $e");
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Could not open dialer. Please check permissions.'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    }
-                  }
+              final Uri phoneUri = Uri.parse('tel:$phone');
+              try {
+                await launchUrl(
+                  phoneUri,
+                  mode: LaunchMode.externalApplication,
+                );
+              } catch (e) {
+                debugPrint("Error launching dialer: $e");
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Could not open dialer. Please check permissions.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            }
                 : null,
           ),
-          // ListTile(
-          //   leading: const Icon(Icons.phone, color: Colors.grey),
-          //   title: const Text("ID"),
-          //   subtitle: Text(uid),
-          //   dense: true,
-          // ),
           const SizedBox(height: 20),
-          
+
           if (shopLat != null && shopLng != null)
             Center(
               child: SizedBox(
@@ -463,7 +524,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               ),
             ),
           const SizedBox(height: 10),
-          
+
           Center(
             child: SizedBox(
               width: double.infinity,
@@ -628,7 +689,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                           scrollDirection: Axis.horizontal,
                           itemCount: categories.length,
                           separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           itemBuilder: (context, index) {
                             final item = categories[index];
                             return GestureDetector(
@@ -641,7 +702,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
                                   color: item["color"].withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border:
-                                      Border.all(color: item["color"], width: 2),
+                                  Border.all(color: item["color"], width: 2),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -802,7 +863,7 @@ class _ConsumerScreen extends State<ConsumerScreen> {
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=S3Rrhs7ZQnmWbyTvy7Es',
+                'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=S3Rrhs7ZQnmWbyTvy7Es',
                 userAgentPackageName: 'com.example.hazir',
               ),
               MarkerLayer(
@@ -819,9 +880,9 @@ class _ConsumerScreen extends State<ConsumerScreen> {
               onPressed: _getUserLocation,
               child: _isLocating
                   ? const SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.my_location, color: Colors.black87),
             ),
           ),

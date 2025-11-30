@@ -136,10 +136,10 @@ class _QueueState extends State<Queue> {
     await _updateConsumerQueueStatus(visitorUid, bookingId, "Serving");
   }
 
-  void _skipCustomer(int index, List<Map<String, dynamic>> queue) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text("${queue[index]['name']} skipped")));
-  }
+  // void _skipCustomer(int index, List<Map<String, dynamic>> queue) {
+  //   ScaffoldMessenger.of(context)
+  //       .showSnackBar(SnackBar(content: Text("${queue[index]['name']} skipped")));
+  // }
 
   Future<void> _removeCustomer(
       int index, List<Map<String, dynamic>> queue) async {
@@ -205,8 +205,6 @@ class _QueueState extends State<Queue> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                 ),
                 const SizedBox(height: 4),
-                // const Text("Avg/Service: 8–10m",
-                //     style: TextStyle(color: Colors.black54, fontSize: 13)),
                 const SizedBox(height: 16),
 
                 if (liveQueue.isEmpty)
@@ -250,12 +248,6 @@ class _QueueState extends State<Queue> {
                                     () => _startService(c),
                                   ),
                                   const SizedBox(width: 8),
-                                  _queueActionButton(
-                                    "Skip",
-                                    Colors.amber[100]!,
-                                    Colors.orange[800]!,
-                                    () => _skipCustomer(index, liveQueue),
-                                  ),
                                   const SizedBox(width: 8),
                                   _queueActionButton(
                                     "Remove",
@@ -310,7 +302,8 @@ class _QueueState extends State<Queue> {
                     _bottomButton("Call Next", Colors.green[700]!,
                         () => _callNext(liveQueue)),
                     _bottomButton("No-show", Colors.amber[700]!, () {_callNext(liveQueue);}),
-                    _bottomButton("Done", Colors.blue[700]!, () {}),
+                    _bottomButton("Done", Colors.green[700]!,
+                        () => _callNext(liveQueue)),
                   ],
                 ),
               ],

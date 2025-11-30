@@ -9,6 +9,7 @@ import 'provider/provider_screen.dart';
 
 import 'consumer/consumer_screen.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();

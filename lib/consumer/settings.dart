@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../authentication/login.dart';
+// import 'authentication/sign_up.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -29,31 +30,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _changePassword(String oldPassword, String newPassword) async {
+  Future<void> _sendPasswordResetEmail() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null && user.email != null) {
       try {
-        AuthCredential credential = EmailAuthProvider.credential(
-          email: user.email!,
-          password: oldPassword,
-        );
-
-        await user.reauthenticateWithCredential(credential);
-        await user.updatePassword(newPassword);
+        await FirebaseAuth.instance.sendPasswordResetEmail(email: user.email!);
 
         if (mounted) {
-          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Password changed successfully!")),
+            SnackBar(
+              content: Text("Password reset link sent to ${user.email}"),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
+            ),
           );
         }
       } on FirebaseAuthException catch (e) {
-        String errorMessage = "Error changing password";
-        if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-          errorMessage = "The old password is incorrect.";
-        } else if (e.code == 'weak-password') {
-          errorMessage = "The new password is too weak.";
+        String errorMessage = "Error sending reset email";
+        if (e.code == 'user-not-found') {
+          errorMessage = "No user found with this email.";
+        } else if (e.code == 'too-many-requests') {
+          errorMessage = "Too many requests. Please try again later.";
         }
 
         if (mounted) {
@@ -72,37 +70,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showChangePasswordDialog() {
-    final TextEditingController oldPassController = TextEditingController();
-    final TextEditingController newPassController = TextEditingController();
-    final _formKey = GlobalKey<FormState>();
-
     showDialog(
       context: context,
       builder: (context) {
+        User? user = FirebaseAuth.instance.currentUser;
         return AlertDialog(
-          title: const Text("Change Password"),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: oldPassController,
-                  decoration: const InputDecoration(labelText: "Old Password"),
-                  obscureText: true,
-                  validator: (val) =>
-                  val!.isEmpty ? "Enter old password" : null,
+          title: const Text("Reset Password"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "A password reset link will be sent to your email address:",
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                user?.email ?? "No email found",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: hazirBlue,
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: newPassController,
-                  decoration: const InputDecoration(labelText: "New Password"),
-                  obscureText: true,
-                  validator: (val) =>
-                  val!.length < 6 ? "Password must be 6+ chars" : null,
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Click the link in the email to reset your password.",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -112,13 +108,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: hazirBlue),
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  _changePassword(
-                      oldPassController.text, newPassController.text);
-                }
+                Navigator.pop(context);
+                _sendPasswordResetEmail();
               },
-              child:
-              const Text("Update", style: TextStyle(color: Colors.white)),
+              child: const Text("Send Link", style: TextStyle(color: Colors.white)),
             ),
           ],
         );

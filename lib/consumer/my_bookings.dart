@@ -13,17 +13,13 @@ Future<bool> _cancelBooking(BuildContext context, Map<String, dynamic> booking, 
     final bookingId = booking['bookingId'];
 
     if (shopId == null || bookingId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid booking data")),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid booking data")),
+        );
+      }
       return false;
     }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
 
     final batch = FirebaseFirestore.instance.batch();
 
@@ -49,23 +45,23 @@ Future<bool> _cancelBooking(BuildContext context, Map<String, dynamic> booking, 
     }
 
     await batch.commit();
+    
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Booking cancelled successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
 
-    Navigator.of(context, rootNavigator: true).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Booking cancelled successfully"),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    return false;
+    return true;
   } catch (e) {
-    Navigator.of(context, rootNavigator: true).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error cancelling booking: $e")),
-    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error cancelling booking: $e")),
+      );
+    }
     return false;
   }
 }

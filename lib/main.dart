@@ -1,17 +1,28 @@
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'firebase_options.dart';
 
-import 'authentication/login.dart';
-import 'provider/provider_screen.dart';
 
-import 'consumer/consumer_screen.dart';
+// import 'atulogin.dart';
+import '../provider/provider_screen.dart';
 
+import '../consumer/consumer_screen.dart';
+
+import '../authentication/login.dart';
+// import '../authentication/sign_up.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+    overlays: [SystemUiOverlay.top],
+  );
 
   runApp(const MyApp());
 }
@@ -38,7 +49,7 @@ class AuthWrapper extends StatelessWidget {
 
   Future<String?> _getUserRole(String uid) async {
     try {
-      
+
       DocumentSnapshot providerDoc = await FirebaseFirestore.instance
           .collection('userProvider')
           .doc(uid)
